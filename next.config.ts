@@ -1,7 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Permite importações de servidores externos de imagem (ex: flags)
+  images: {
+    remotePatterns: [],
+  },
 };
 
 export default nextConfig;
