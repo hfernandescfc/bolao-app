@@ -46,7 +46,7 @@ export default async function AdminUsersPage() {
                   <p className="text-xs text-gray-500">{u.email}</p>
                 </div>
                 <form action={toggleApproval.bind(null, u.id, true)}>
-                  <Button size="sm" className="bg-green-700 hover:bg-green-800">
+                  <Button type="submit" size="sm" className="bg-green-700 hover:bg-green-800">
                     Aprovar
                   </Button>
                 </form>
@@ -75,13 +75,13 @@ export default async function AdminUsersPage() {
               <div className="flex gap-2">
                 {u.role !== 'admin' && (
                   <form action={setRole.bind(null, u.id, 'admin')}>
-                    <Button size="sm" variant="outline" className="text-xs h-8">
+                    <Button type="submit" size="sm" variant="outline" className="text-xs h-8">
                       Tornar Admin
                     </Button>
                   </form>
                 )}
                 <form action={toggleApproval.bind(null, u.id, false)}>
-                  <Button size="sm" variant="outline" className="text-xs h-8 text-red-600 border-red-200">
+                  <Button type="submit" size="sm" variant="outline" className="text-xs h-8 text-red-600 border-red-200">
                     Revogar
                   </Button>
                 </form>

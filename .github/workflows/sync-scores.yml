@@ -1,0 +1,27 @@
+name: Sync Scores
+
+# Roda a cada 5 minutos das 10h às 03h UTC durante a fase de grupos (11-27 jun)
+# GitHub Actions pode atrasar até ~1 min em horários de pico — normal para este uso
+on:
+  schedule:
+    # Horário central dos jogos: 13h–02h UTC = 10h–23h Brasília
+    - cron: '*/5 13-23 11-27 6 *'   # tarde/noite (jogos mais frequentes)
+    - cron: '*/5 0-3 12-28 6 *'     # madrugada UTC (continuação de jogos noturnos)
+  workflow_dispatch:                  # permite acionar manualmente pelo GitHub
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Chamar endpoint de sync
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X GET "${{ secrets.APP_URL }}/api/cron" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            --max-time 30)
+          echo "HTTP status: $STATUS"
+          if [ "$STATUS" != "200" ]; then
+            echo "Erro: endpoint retornou $STATUS"
+            exit 1
+          fi
