@@ -3,6 +3,8 @@ import { Geist } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { ServiceWorker } from "@/components/layout/ServiceWorker";
+import { LanguageProvider } from "@/lib/i18n/context";
+import { getLocale } from "@/lib/i18n/server";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,17 +29,20 @@ export const viewport: Viewport = {
   themeColor: "#15803d",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getLocale()
   return (
-    <html lang="pt-BR" className={`${geistSans.variable} h-full antialiased`}>
+    <html lang={locale === 'en' ? 'en' : 'pt-BR'} className={`${geistSans.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
-        {children}
-        <Toaster richColors position="top-center" />
-        <ServiceWorker />
+        <LanguageProvider initialLocale={locale}>
+          {children}
+          <Toaster richColors position="top-center" />
+          <ServiceWorker />
+        </LanguageProvider>
       </body>
     </html>
   );

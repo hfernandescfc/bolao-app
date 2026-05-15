@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Flag } from '@/components/ui/flag'
 import { Check, Clock, Loader2 } from 'lucide-react'
+import { useT, useLocale } from '@/lib/i18n/context'
 
 interface MatchCardProps {
   match: Match
@@ -17,9 +18,9 @@ interface MatchCardProps {
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'error'
 
-function formatDate(dateStr: string) {
+function formatDate(dateStr: string, locale: string) {
   const d = new Date(dateStr)
-  return d.toLocaleDateString('pt-BR', {
+  return d.toLocaleDateString(locale === 'en' ? 'en-US' : 'pt-BR', {
     weekday: 'short',
     day: '2-digit',
     month: '2-digit',
@@ -35,6 +36,8 @@ export function MatchCard({ match, pick, isDeadlinePassed, userId }: MatchCardPr
   const [saveState, setSaveState] = useState<SaveState>('idle')
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const supabase = createClient()
+  const t = useT()
+  const { locale } = useLocale()
 
   const isFinished = match.status === 'FINISHED'
   const isLive = match.status === 'LIVE' || match.status === 'PAUSED'
@@ -88,10 +91,10 @@ export function MatchCard({ match, pick, isDeadlinePassed, userId }: MatchCardPr
     <div className={`bg-white rounded-xl border p-4 shadow-sm ${isLive ? 'border-yellow-400' : 'border-gray-100'}`}>
       <div className="flex items-center justify-between mb-3">
         <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
-          Grupo {match.group_id} · Rodada {match.matchday}
+          {t.matches.group} {match.group_id} · {t.matches.round} {match.matchday}
         </span>
         <div className="flex items-center gap-2">
-          {isLive && <Badge variant="destructive" className="text-[10px] py-0 animate-pulse">AO VIVO</Badge>}
+          {isLive && <Badge variant="destructive" className="text-[10px] py-0 animate-pulse">{t.matches.live}</Badge>}
           {isFinished && (
             <span className="text-[10px] text-gray-400">
               {match.home_score} x {match.away_score}
@@ -148,21 +151,21 @@ export function MatchCard({ match, pick, isDeadlinePassed, userId }: MatchCardPr
       <div className="flex items-center justify-between mt-2">
         <span className="text-[10px] text-gray-400 flex items-center gap-1">
           <Clock size={10} />
-          {formatDate(match.scheduled_at)}
+          {formatDate(match.scheduled_at, locale)}
         </span>
         <span className="text-[10px]">
           {saveState === 'saving' && (
             <span className="text-gray-400 flex items-center gap-1">
-              <Loader2 size={10} className="animate-spin" /> Salvando...
+              <Loader2 size={10} className="animate-spin" /> {t.matches.saving}
             </span>
           )}
           {saveState === 'saved' && (
             <span className="text-green-600 flex items-center gap-1">
-              <Check size={10} /> Salvo
+              <Check size={10} /> {t.matches.saved}
             </span>
           )}
           {saveState === 'error' && (
-            <span className="text-red-500">Erro ao salvar</span>
+            <span className="text-red-500">{t.matches.saveError}</span>
           )}
         </span>
       </div>

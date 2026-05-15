@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Flag } from '@/components/ui/flag'
 import { Check, Loader2 } from 'lucide-react'
+import { useT } from '@/lib/i18n/context'
 
 interface GroupCardProps {
   group: Group
@@ -24,6 +25,7 @@ export function GroupCard({ group, teams, pick, isDeadlinePassed, userId }: Grou
   const [second, setSecond] = useState<string>(pick?.second_place?.toString() ?? '')
   const [saveState, setSaveState] = useState<SaveState>('idle')
   const supabase = createClient()
+  const t = useT()
 
   const savePick = useCallback(
     async (firstId: string, secondId: string) => {
@@ -78,7 +80,7 @@ export function GroupCard({ group, teams, pick, isDeadlinePassed, userId }: Grou
           )}
           {saveState === 'saving' && <Loader2 size={12} className="animate-spin text-gray-400" />}
           {saveState === 'saved' && <Check size={12} className="text-green-600" />}
-          {saveState === 'error' && <span className="text-[10px] text-red-500">Erro</span>}
+          {saveState === 'error' && <span className="text-[10px] text-red-500">{t.groups.error}</span>}
         </div>
       </div>
 
@@ -93,10 +95,10 @@ export function GroupCard({ group, teams, pick, isDeadlinePassed, userId }: Grou
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <Label className="text-xs text-gray-500 mb-1 block">1º Lugar</Label>
+          <Label className="text-xs text-gray-500 mb-1 block">{t.groups.first}</Label>
           <Select value={first} onValueChange={handleFirst} disabled={isDeadlinePassed}>
             <SelectTrigger className="h-9 text-xs">
-              <SelectValue placeholder="Selecione..." />
+              <SelectValue placeholder={t.groups.selectPlaceholder} />
             </SelectTrigger>
             <SelectContent>
               {teams
@@ -114,10 +116,10 @@ export function GroupCard({ group, teams, pick, isDeadlinePassed, userId }: Grou
         </div>
 
         <div>
-          <Label className="text-xs text-gray-500 mb-1 block">2º Lugar</Label>
+          <Label className="text-xs text-gray-500 mb-1 block">{t.groups.second}</Label>
           <Select value={second} onValueChange={handleSecond} disabled={isDeadlinePassed || !first}>
             <SelectTrigger className="h-9 text-xs">
-              <SelectValue placeholder="Selecione..." />
+              <SelectValue placeholder={t.groups.selectPlaceholder} />
             </SelectTrigger>
             <SelectContent>
               {teams

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { MOCK_MATCHES, MOCK_TEAMS } from '@/lib/mock/data'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Team } from '@/types'
+import { useT } from '@/lib/i18n/context'
 
 interface MatchPick { home_score: number; away_score: number }
 interface GroupPick { first: string; second: string }
@@ -11,6 +12,7 @@ interface GroupPick { first: string; second: string }
 export default function DemoMyPicksPage() {
   const [matchPicks, setMatchPicks] = useState<Record<number, MatchPick>>({})
   const [groupPicks, setGroupPicks] = useState<Record<string, GroupPick>>({})
+  const t = useT()
 
   useEffect(() => {
     const mp = localStorage.getItem('demo_match_picks')
@@ -20,25 +22,23 @@ export default function DemoMyPicksPage() {
   }, [])
 
   const teamMap: Record<number, Team> = {}
-  for (const t of MOCK_TEAMS) teamMap[t.id] = t
+  for (const t_ of MOCK_TEAMS) teamMap[t_.id] = t_
 
   const matchEntries = MOCK_MATCHES.filter(m => matchPicks[m.id])
   const groupKeys = Object.keys(groupPicks).sort()
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-bold text-gray-900">Meus Palpites (Demo)</h1>
+      <h1 className="text-xl font-bold text-gray-900">{t.demo.myPicksTitle}</h1>
 
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm">Partidas preenchidas ({matchEntries.length}/72)</CardTitle>
+          <CardTitle className="text-sm">{t.demo.matchesFilled} ({matchEntries.length}/72)</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           <div className="divide-y divide-gray-50 max-h-80 overflow-y-auto">
             {matchEntries.length === 0 && (
-              <p className="text-center text-gray-400 text-sm py-6">
-                Vá para Partidas e preencha os placares!
-              </p>
+              <p className="text-center text-gray-400 text-sm py-6">{t.demo.goToMatches}</p>
             )}
             {matchEntries.map(m => (
               <div key={m.id} className="flex items-center justify-between px-4 py-2.5">
@@ -56,14 +56,12 @@ export default function DemoMyPicksPage() {
 
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm">Grupos preenchidos ({groupKeys.length}/12)</CardTitle>
+          <CardTitle className="text-sm">{t.demo.groupsFilled} ({groupKeys.length}/12)</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           <div className="divide-y divide-gray-50">
             {groupKeys.length === 0 && (
-              <p className="text-center text-gray-400 text-sm py-6">
-                Vá para Grupos e escolha os classificados!
-              </p>
+              <p className="text-center text-gray-400 text-sm py-6">{t.demo.goToGroups}</p>
             )}
             {groupKeys.map(g => {
               const p = groupPicks[g]
@@ -71,7 +69,7 @@ export default function DemoMyPicksPage() {
               const t2 = teamMap[parseInt(p.second)]
               return (
                 <div key={g} className="flex items-center justify-between px-4 py-2.5">
-                  <span className="text-xs text-gray-500">Grupo {g}</span>
+                  <span className="text-xs text-gray-500">{t.demo.group} {g}</span>
                   <span className="text-xs text-gray-800">
                     {t1?.flag_emoji} {t1?.name} · {t2?.flag_emoji} {t2?.name}
                   </span>

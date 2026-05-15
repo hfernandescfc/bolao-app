@@ -6,10 +6,13 @@ import { login } from '@/app/actions/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { useT } from '@/lib/i18n/context'
 
 export default function LoginPage() {
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
+  const t = useT()
+  const s = t.auth.signIn
 
   function handleSubmit(formData: FormData) {
     setError(null)
@@ -24,29 +27,29 @@ export default function LoginPage() {
       <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full">
         <div className="text-center mb-8">
           <div className="text-5xl mb-2">⚽</div>
-          <h1 className="text-2xl font-bold text-gray-900">Bolão dos Bezerra COPA 2026</h1>
-          <p className="text-gray-500 text-sm mt-1">Entre na sua conta</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t.app.name}</h1>
+          <p className="text-gray-500 text-sm mt-1">{s.subtitle}</p>
         </div>
 
         <form action={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{s.emailLabel}</Label>
             <Input
               id="email"
               name="email"
               type="email"
-              placeholder="seu@email.com"
+              placeholder={s.emailPlaceholder}
               required
               className="mt-1"
             />
           </div>
           <div>
-            <Label htmlFor="password">Senha</Label>
+            <Label htmlFor="password">{s.passwordLabel}</Label>
             <Input
               id="password"
               name="password"
               type="password"
-              placeholder="••••••••"
+              placeholder={s.passwordPlaceholder}
               required
               className="mt-1"
             />
@@ -57,22 +60,19 @@ export default function LoginPage() {
           )}
 
           <Button type="submit" className="w-full" disabled={isPending}>
-            {isPending ? 'Entrando...' : 'Entrar'}
+            {isPending ? s.submitting : s.submit}
           </Button>
         </form>
 
         <p className="text-center text-sm text-gray-500 mt-6">
-          Não tem conta?{' '}
+          {s.noAccount}{' '}
           <Link href="/register" className="text-green-700 font-medium hover:underline">
-            Cadastre-se
+            {s.register}
           </Link>
         </p>
         <div className="mt-4 pt-4 border-t border-gray-100 text-center">
-          <Link
-            href="/demo"
-            className="text-xs text-amber-600 hover:underline font-medium"
-          >
-            🎮 Ver demo sem conta →
+          <Link href="/demo" className="text-xs text-amber-600 hover:underline font-medium">
+            {s.demo}
           </Link>
         </div>
       </div>

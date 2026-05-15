@@ -5,12 +5,13 @@ import { Match } from '@/types'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Flag } from '@/components/ui/flag'
-import { Check, Clock, Loader2 } from 'lucide-react'
+import { Check, Clock } from 'lucide-react'
+import { useT, useLocale } from '@/lib/i18n/context'
 
 const STORAGE_KEY = 'demo_match_picks'
 
-function formatDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString('pt-BR', {
+function formatDate(dateStr: string, locale: string) {
+  return new Date(dateStr).toLocaleDateString(locale === 'en' ? 'en-US' : 'pt-BR', {
     weekday: 'short', day: '2-digit', month: '2-digit',
     hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo',
   })
@@ -25,6 +26,8 @@ function DemoMatchCard({ match, initialHome, initialAway }: {
   const [away, setAway] = useState(initialAway)
   const [saved, setSaved] = useState(false)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const t = useT()
+  const { locale } = useLocale()
 
   const isFinished = match.status === 'FINISHED'
   const isLive = match.status === 'LIVE' || match.status === 'PAUSED'
@@ -53,13 +56,13 @@ function DemoMatchCard({ match, initialHome, initialAway }: {
     <div className={`bg-white rounded-xl border p-4 shadow-sm ${isLive ? 'border-yellow-400' : 'border-gray-100'}`}>
       <div className="flex items-center justify-between mb-3">
         <span className="text-[10px] text-gray-400 font-medium uppercase">
-          Grupo {match.group_id} · Rodada {match.matchday}
+          {t.matches.group} {match.group_id} · {t.matches.round} {match.matchday}
         </span>
         <div className="flex items-center gap-2">
-          {isLive && <Badge variant="destructive" className="text-[10px] py-0 animate-pulse">AO VIVO</Badge>}
+          {isLive && <Badge variant="destructive" className="text-[10px] py-0 animate-pulse">{t.matches.live}</Badge>}
           {isFinished && (
             <span className="text-[10px] text-gray-500 font-medium">
-              Resultado: {match.home_score} x {match.away_score}
+              {t.demo.result} {match.home_score} x {match.away_score}
             </span>
           )}
         </div>
@@ -99,11 +102,11 @@ function DemoMatchCard({ match, initialHome, initialAway }: {
 
       <div className="flex items-center justify-between mt-2">
         <span className="text-[10px] text-gray-400 flex items-center gap-1">
-          <Clock size={10} /> {formatDate(match.scheduled_at)}
+          <Clock size={10} /> {formatDate(match.scheduled_at, locale)}
         </span>
         {saved && (
           <span className="text-[10px] text-green-600 flex items-center gap-1">
-            <Check size={10} /> Salvo
+            <Check size={10} /> {t.matches.saved}
           </span>
         )}
       </div>
@@ -118,6 +121,7 @@ export function DemoMatchList({ matches }: { matches: Match[] }) {
   const [filterRound, setFilterRound] = useState(0)
   const [filterStatus, setFilterStatus] = useState<StatusFilter>('all')
   const [picks, setPicks] = useState<Record<number, { home_score: number; away_score: number }>>({})
+  const t = useT()
 
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY)
@@ -139,16 +143,16 @@ export function DemoMatchList({ matches }: { matches: Match[] }) {
 
   const emptyMessage =
     filterStatus === 'pending'
-      ? 'Tudo preenchido por aqui! 🎉'
+      ? t.matches.allFilled
       : filterStatus === 'filled'
-        ? 'Nenhum palpite preenchido ainda.'
-        : 'Nenhuma partida encontrada.'
+        ? t.matches.noneFilled
+        : t.matches.notFound
 
   return (
     <div>
       <div className="mb-4">
         <div className="flex items-center justify-between mb-1">
-          <span className="text-sm font-semibold text-gray-700">{filledCount}/{matches.length} preenchidos</span>
+          <span className="text-sm font-semibold text-gray-700">{filledCount}/{matches.length} {t.matches.picksFilled}</span>
         </div>
         <div className="w-full bg-gray-100 rounded-full h-2">
           <div className="bg-green-600 h-2 rounded-full transition-all" style={{ width: `${(filledCount / matches.length) * 100}%` }} />
@@ -158,20 +162,20 @@ export function DemoMatchList({ matches }: { matches: Match[] }) {
       <div className="flex gap-2 mb-2">
         <button onClick={() => setFilterStatus('all')}
           className={`flex-1 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${filterStatus === 'all' ? 'bg-green-700 text-white' : 'bg-gray-100 text-gray-600'}`}>
-          Todas ({matches.length})
+          {t.matches.all} ({matches.length})
         </button>
         <button onClick={() => setFilterStatus('pending')}
           className={`flex-1 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${filterStatus === 'pending' ? 'bg-amber-500 text-white' : 'bg-gray-100 text-gray-600'}`}>
-          Pendentes ({pendingCount})
+          {t.matches.pending} ({pendingCount})
         </button>
         <button onClick={() => setFilterStatus('filled')}
           className={`flex-1 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${filterStatus === 'filled' ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-600'}`}>
-          Preenchidas ({filledCount})
+          {t.matches.filled} ({filledCount})
         </button>
       </div>
 
       <div className="flex gap-2 overflow-x-auto pb-2 mb-4">
-        {[{ label: 'Todas', val: 0 }, { label: 'Rodada 1', val: 1 }, { label: 'Rodada 2', val: 2 }, { label: 'Rodada 3', val: 3 }].map(({ label, val }) => (
+        {[{ label: t.matches.all, val: 0 }, { label: `${t.matches.round} 1`, val: 1 }, { label: `${t.matches.round} 2`, val: 2 }, { label: `${t.matches.round} 3`, val: 3 }].map(({ label, val }) => (
           <button key={val} onClick={() => setFilterRound(val)}
             className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${filterRound === val ? 'bg-green-700 text-white' : 'bg-gray-100 text-gray-600'}`}>
             {label}
@@ -180,12 +184,12 @@ export function DemoMatchList({ matches }: { matches: Match[] }) {
         <div className="w-px bg-gray-200" />
         <button onClick={() => setFilterGroup('all')}
           className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${filterGroup === 'all' ? 'bg-green-700 text-white' : 'bg-gray-100 text-gray-600'}`}>
-          Todos
+          {t.matches.allGroups}
         </button>
         {groups.map((g) => (
           <button key={g} onClick={() => setFilterGroup(g)}
             className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${filterGroup === g ? 'bg-green-700 text-white' : 'bg-gray-100 text-gray-600'}`}>
-            Grupo {g}
+            {t.matches.group} {g}
           </button>
         ))}
       </div>

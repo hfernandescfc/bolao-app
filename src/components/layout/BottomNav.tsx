@@ -3,20 +3,22 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { BarChart3, CalendarDays, ListOrdered, Shield, Trophy, User } from 'lucide-react'
-
-const navItems = [
-  { href: '/dashboard', label: 'Ranking', icon: BarChart3 },
-  { href: '/matches', label: 'Partidas', icon: CalendarDays },
-  { href: '/groups', label: 'Grupos', icon: Shield },
-  { href: '/my-standings', label: 'Tabela', icon: ListOrdered },
-  { href: '/my-picks', label: 'Meus', icon: User },
-]
+import { useT } from '@/lib/i18n/context'
 
 export function BottomNav({ isAdmin }: { isAdmin: boolean }) {
   const pathname = usePathname()
+  const t = useT()
+
+  const navItems = [
+    { href: '/dashboard', label: t.nav.ranking, icon: BarChart3 },
+    { href: '/matches', label: t.nav.matches, icon: CalendarDays },
+    { href: '/groups', label: t.nav.groups, icon: Shield },
+    { href: '/my-standings', label: t.nav.table, icon: ListOrdered },
+    { href: '/my-picks', label: t.nav.mine, icon: User },
+  ]
 
   const allItems = isAdmin
-    ? [...navItems, { href: '/admin', label: 'Admin', icon: Trophy }]
+    ? [...navItems, { href: '/admin', label: t.nav.admin, icon: Trophy }]
     : navItems
 
   return (
@@ -29,9 +31,7 @@ export function BottomNav({ isAdmin }: { isAdmin: boolean }) {
               key={href}
               href={href}
               className={`flex flex-col items-center gap-0.5 px-1.5 py-2 rounded-xl transition-colors ${
-                isActive
-                  ? 'text-green-700'
-                  : 'text-gray-400 hover:text-gray-600'
+                isActive ? 'text-green-700' : 'text-gray-400 hover:text-gray-600'
               }`}
             >
               <Icon size={20} strokeWidth={isActive ? 2.5 : 1.5} />

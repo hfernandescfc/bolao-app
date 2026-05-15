@@ -2,11 +2,11 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { Group, Team } from '@/types'
-import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Flag } from '@/components/ui/flag'
 import { Check } from 'lucide-react'
+import { useT } from '@/lib/i18n/context'
 
 const STORAGE_KEY = 'demo_group_picks'
 
@@ -22,6 +22,7 @@ function DemoGroupCard({ group, teams, initialFirst, initialSecond, onSave }: De
   const [first, setFirst] = useState(initialFirst)
   const [second, setSecond] = useState(initialSecond)
   const [saved, setSaved] = useState(false)
+  const t = useT()
 
   function handleFirst(value: string | null) {
     const v = value ?? ''
@@ -62,10 +63,10 @@ function DemoGroupCard({ group, teams, initialFirst, initialSecond, onSave }: De
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <Label className="text-xs text-gray-500 mb-1 block">1º Lugar</Label>
+          <Label className="text-xs text-gray-500 mb-1 block">{t.groups.first}</Label>
           <Select value={first} onValueChange={handleFirst}>
             <SelectTrigger className="h-9 text-xs">
-              <SelectValue placeholder="Selecione..." />
+              <SelectValue placeholder={t.groups.selectPlaceholder} />
             </SelectTrigger>
             <SelectContent>
               {teams.filter(t => t.id.toString() !== second).map(t => (
@@ -80,10 +81,10 @@ function DemoGroupCard({ group, teams, initialFirst, initialSecond, onSave }: De
           </Select>
         </div>
         <div>
-          <Label className="text-xs text-gray-500 mb-1 block">2º Lugar</Label>
+          <Label className="text-xs text-gray-500 mb-1 block">{t.groups.second}</Label>
           <Select value={second} onValueChange={handleSecond} disabled={!first}>
             <SelectTrigger className="h-9 text-xs">
-              <SelectValue placeholder="Selecione..." />
+              <SelectValue placeholder={t.groups.selectPlaceholder} />
             </SelectTrigger>
             <SelectContent>
               {teams.filter(t => t.id.toString() !== first).map(t => (
@@ -109,6 +110,7 @@ interface DemoGroupListProps {
 
 export function DemoGroupList({ groups, teamsByGroup }: DemoGroupListProps) {
   const [picks, setPicks] = useState<Record<string, { first: string; second: string }>>({})
+  const t = useT()
 
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY)
@@ -129,7 +131,7 @@ export function DemoGroupList({ groups, teamsByGroup }: DemoGroupListProps) {
     <div>
       <div className="mb-4">
         <div className="flex items-center justify-between mb-1">
-          <span className="text-sm text-gray-600">{filledCount}/12 grupos preenchidos</span>
+          <span className="text-sm text-gray-600">{filledCount}/12 {t.groups.filled}</span>
         </div>
         <div className="w-full bg-gray-100 rounded-full h-2">
           <div className="bg-green-600 h-2 rounded-full transition-all" style={{ width: `${(filledCount / 12) * 100}%` }} />

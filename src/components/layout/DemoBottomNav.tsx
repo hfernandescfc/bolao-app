@@ -3,17 +3,19 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { BarChart3, CalendarDays, ListOrdered, Shield, User } from 'lucide-react'
-
-const navItems = [
-  { href: '/demo', label: 'Ranking', icon: BarChart3 },
-  { href: '/demo/matches', label: 'Partidas', icon: CalendarDays },
-  { href: '/demo/groups', label: 'Grupos', icon: Shield },
-  { href: '/demo/my-standings', label: 'Tabela', icon: ListOrdered },
-  { href: '/demo/my-picks', label: 'Meus', icon: User },
-]
+import { useT } from '@/lib/i18n/context'
 
 export function BottomNav() {
   const pathname = usePathname()
+  const t = useT()
+
+  const navItems = [
+    { href: '/demo', label: t.nav.ranking, icon: BarChart3 },
+    { href: '/demo/matches', label: t.nav.matches, icon: CalendarDays },
+    { href: '/demo/groups', label: t.nav.groups, icon: Shield },
+    { href: '/demo/my-standings', label: t.nav.table, icon: ListOrdered },
+    { href: '/demo/my-picks', label: t.nav.mine, icon: User },
+  ]
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200">

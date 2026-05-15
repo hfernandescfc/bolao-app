@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { MatchList } from '@/components/matches/MatchList'
 import { Match, MatchPick, PICKS_DEADLINE } from '@/types'
+import { getT } from '@/lib/i18n/server'
 
 export default async function MatchesPage() {
   const supabase = await createClient()
@@ -10,15 +11,15 @@ export default async function MatchesPage() {
   } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const [{ data: matchesRaw }, { data: picksRaw }] = await Promise.all([
-    supabase
-      .from('matches')
-      .select('*, home_team:teams!matches_home_team_id_fkey(*), away_team:teams!matches_away_team_id_fkey(*)')
-      .order('scheduled_at', { ascending: true }),
-    supabase
-      .from('match_picks')
-      .select('*')
-      .eq('user_id', user.id),
+  const [[{ data: matchesRaw }, { data: picksRaw }], t] = await Promise.all([
+    Promise.all([
+      supabase
+        .from('matches')
+        .select('*, home_team:teams!matches_home_team_id_fkey(*), away_team:teams!matches_away_team_id_fkey(*)')
+        .order('scheduled_at', { ascending: true }),
+      supabase.from('match_picks').select('*').eq('user_id', user.id),
+    ]),
+    getT(),
   ])
 
   const matches = (matchesRaw ?? []) as Match[]
@@ -33,22 +34,18 @@ export default async function MatchesPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-xl font-bold text-gray-900">Palpites — Partidas</h1>
+        <h1 className="text-xl font-bold text-gray-900">{t.matches.title}</h1>
         {isDeadlinePassed && (
           <span className="text-xs text-red-600 bg-red-50 px-2 py-1 rounded-full">
-            Prazo encerrado
+            {t.matches.deadlinePassed}
           </span>
         )}
       </div>
       {!isDeadlinePassed && (
-        <p className="text-xs text-gray-500 mb-4">
-          Palpites bloqueados em 11/06 às 13h (horário de Brasília)
-        </p>
+        <p className="text-xs text-gray-500 mb-4">{t.matches.deadline}</p>
       )}
       {matches.length === 0 ? (
-        <p className="text-center text-gray-400 py-12">
-          As partidas serão carregadas em breve.
-        </p>
+        <p className="text-center text-gray-400 py-12">{t.matches.empty}</p>
       ) : (
         <MatchList
           matches={matches}

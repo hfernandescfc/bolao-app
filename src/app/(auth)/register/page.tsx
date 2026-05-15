@@ -6,10 +6,13 @@ import { register } from '@/app/actions/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { useT } from '@/lib/i18n/context'
 
 export default function RegisterPage() {
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
+  const t = useT()
+  const s = t.auth.register
 
   function handleSubmit(formData: FormData) {
     setError(null)
@@ -24,40 +27,40 @@ export default function RegisterPage() {
       <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full">
         <div className="text-center mb-8">
           <div className="text-5xl mb-2">⚽</div>
-          <h1 className="text-2xl font-bold text-gray-900">Bolão dos Bezerra COPA 2026</h1>
-          <p className="text-gray-500 text-sm mt-1">Criar conta</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t.app.name}</h1>
+          <p className="text-gray-500 text-sm mt-1">{s.subtitle}</p>
         </div>
 
         <form action={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="display_name">Seu nome</Label>
+            <Label htmlFor="display_name">{s.nameLabel}</Label>
             <Input
               id="display_name"
               name="display_name"
               type="text"
-              placeholder="Como quer ser chamado?"
+              placeholder={s.namePlaceholder}
               required
               className="mt-1"
             />
           </div>
           <div>
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{s.emailLabel}</Label>
             <Input
               id="email"
               name="email"
               type="email"
-              placeholder="seu@email.com"
+              placeholder={s.emailPlaceholder}
               required
               className="mt-1"
             />
           </div>
           <div>
-            <Label htmlFor="password">Senha</Label>
+            <Label htmlFor="password">{s.passwordLabel}</Label>
             <Input
               id="password"
               name="password"
               type="password"
-              placeholder="Mínimo 8 caracteres"
+              placeholder={s.passwordPlaceholder}
               required
               minLength={8}
               className="mt-1"
@@ -69,19 +72,17 @@ export default function RegisterPage() {
           )}
 
           <Button type="submit" className="w-full" disabled={isPending}>
-            {isPending ? 'Criando conta...' : 'Criar conta'}
+            {isPending ? s.submitting : s.submit}
           </Button>
         </form>
 
         <p className="text-center text-sm text-gray-500 mt-6">
-          Já tem conta?{' '}
+          {s.hasAccount}{' '}
           <Link href="/login" className="text-green-700 font-medium hover:underline">
-            Entre aqui
+            {s.signIn}
           </Link>
         </p>
-        <p className="text-center text-xs text-gray-400 mt-2">
-          Após o cadastro, o admin do bolão precisa aprovar sua conta.
-        </p>
+        <p className="text-center text-xs text-gray-400 mt-2">{s.notice}</p>
       </div>
     </div>
   )
