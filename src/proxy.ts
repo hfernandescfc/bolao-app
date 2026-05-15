@@ -29,7 +29,13 @@ export async function proxy(request: NextRequest) {
 
   const { pathname } = request.nextUrl
 
-  const isAuthRoute = pathname.startsWith('/login') || pathname.startsWith('/register')
+  // Rotas que redirecionam usuários já autenticados para o dashboard
+  const isSignInRoute = pathname.startsWith('/login') || pathname.startsWith('/register')
+  // Rotas públicas acessíveis tanto com quanto sem sessão
+  const isPublicAuthRoute =
+    pathname.startsWith('/forgot-password') ||
+    pathname.startsWith('/reset-password') ||
+    pathname.startsWith('/auth/')
   const isAdminRoute = pathname.startsWith('/admin')
   const isApiRoute = pathname.startsWith('/api')
   const isDemoRoute = pathname.startsWith('/demo')
@@ -38,18 +44,18 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith('/icons') ||
     pathname === '/manifest.json'
 
-  if (isPublicAsset || isApiRoute || isDemoRoute) {
+  if (isPublicAsset || isApiRoute || isDemoRoute || isPublicAuthRoute) {
     return supabaseResponse
   }
 
   if (!user) {
-    if (isAuthRoute) return supabaseResponse
+    if (isSignInRoute) return supabaseResponse
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
   }
 
-  if (isAuthRoute) {
+  if (isSignInRoute) {
     const url = request.nextUrl.clone()
     url.pathname = '/dashboard'
     return NextResponse.redirect(url)
