@@ -7,7 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "seed": "tsx scripts/seed.ts"
+    "seed": "tsx scripts/seed.ts",
+    "db:migrate": "tsx scripts/apply-migrations.ts",
+    "db:verify": "tsx scripts/verify-schema.ts",
+    "test:picks": "tsx scripts/test-picks.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.4.1",
@@ -29,11 +32,13 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/pg": "^8.20.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "dotenv": "^17.4.2",
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
+    "pg": "^8.21.0",
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
     "typescript": "^5"
