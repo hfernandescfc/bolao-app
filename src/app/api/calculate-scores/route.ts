@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient, createClient } from '@/lib/supabase/server'
-import { calculateMatchPoints, calculateGroupPoints } from '@/lib/scoring/calculator'
+import { scoreMatchPicks, scoreGroupPicks } from '@/lib/scoring/recalculate'
 
 export async function POST(request: NextRequest) {
   const authClient = await createClient()
@@ -22,33 +22,16 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { data: finishedMatches } = await supabase
-      .from('matches')
-      .select('id, home_score, away_score')
-      .eq('status', 'FINISHED')
-      .not('home_score', 'is', null)
-
-    let matchPtsUpdated = 0
-    for (const match of finishedMatches ?? []) {
-      const { data: picks } = await supabase
-        .from('match_picks')
-        .select('id, home_score, away_score')
-        .eq('match_id', match.id)
-        .is('points_earned', null)
-
-      for (const pick of picks ?? []) {
-        const pts = calculateMatchPoints(
-          { home_score: pick.home_score, away_score: pick.away_score },
-          { home_score: match.home_score!, away_score: match.away_score! }
-        )
-        await supabase.from('match_picks').update({ points_earned: pts }).eq('id', pick.id)
-        matchPtsUpdated++
-      }
-    }
+    const matchPtsUpdated = await scoreMatchPicks(supabase)
+    const groupPtsUpdated = await scoreGroupPicks(supabase)
 
     await supabase.rpc('recalculate_leaderboard')
 
-    return NextResponse.json({ updated: matchPtsUpdated })
+    return NextResponse.json({
+      updated: matchPtsUpdated + groupPtsUpdated,
+      matchPicks: matchPtsUpdated,
+      groupPicks: groupPtsUpdated,
+    })
   } catch (error) {
     return NextResponse.json({ error: String(error) }, { status: 500 })
   }

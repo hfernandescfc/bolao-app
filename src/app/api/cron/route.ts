@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { fetchTodayMatches, mapApiStatus } from '@/lib/football-api/client'
 import { calculateMatchPoints } from '@/lib/scoring/calculator'
+import { scoreGroupPicks } from '@/lib/scoring/recalculate'
 
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get('authorization')
@@ -67,10 +68,13 @@ export async function GET(request: NextRequest) {
       updated++
     }
 
-    await supabase.from('sync_log').insert({ matches_updated: updated, triggered_by: 'cron' })
-    if (updated > 0) await supabase.rpc('recalculate_leaderboard')
+    // Pontua palpites de grupos que acabaram de encerrar (idempotente).
+    const groupUpdated = await scoreGroupPicks(supabase)
 
-    return NextResponse.json({ ok: true, updated })
+    await supabase.from('sync_log').insert({ matches_updated: updated, triggered_by: 'cron' })
+    if (updated > 0 || groupUpdated > 0) await supabase.rpc('recalculate_leaderboard')
+
+    return NextResponse.json({ ok: true, updated, groupUpdated })
   } catch (error) {
     console.error('Cron error:', error)
     return NextResponse.json({ error: String(error) }, { status: 500 })

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { fetchGroupStageMatches, mapApiStatus } from '@/lib/football-api/client'
 import { calculateMatchPoints } from '@/lib/scoring/calculator'
+import { scoreGroupPicks } from '@/lib/scoring/recalculate'
 
 export async function POST(request: NextRequest) {
   const authClient = await createClient()
@@ -78,10 +79,12 @@ export async function POST(request: NextRequest) {
       updated++
     }
 
+    const groupUpdated = await scoreGroupPicks(supabase)
+
     await supabase.from('sync_log').insert({ matches_updated: updated, triggered_by: 'admin' })
     await supabase.rpc('recalculate_leaderboard')
 
-    return NextResponse.json({ updated })
+    return NextResponse.json({ updated, groupUpdated })
   } catch (error) {
     console.error('Sync error:', error)
     return NextResponse.json({ error: String(error) }, { status: 500 })

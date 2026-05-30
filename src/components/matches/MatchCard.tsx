@@ -35,6 +35,14 @@ export function MatchCard({ match, pick, isDeadlinePassed, userId }: MatchCardPr
   const [away, setAway] = useState(pick?.away_score?.toString() ?? '')
   const [saveState, setSaveState] = useState<SaveState>('idle')
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // Espelha o valor mais recente digitado e marca se há alteração ainda não
+  // persistida. Permite dar "flush" do palpite no blur e no unmount sem
+  // depender do estado capturado pelo closure do setTimeout.
+  const latest = useRef({
+    home: pick?.home_score?.toString() ?? '',
+    away: pick?.away_score?.toString() ?? '',
+    dirty: false,
+  })
   const supabase = createClient()
   const t = useT()
   const { locale } = useLocale()
@@ -60,29 +68,44 @@ export function MatchCard({ match, pick, isDeadlinePassed, userId }: MatchCardPr
         },
         { onConflict: 'user_id,match_id' }
       )
-      setSaveState(error ? 'error' : 'saved')
-      if (!error) {
+      if (error) {
+        // Mantém "dirty" para que um próximo flush (blur/unmount) tente de novo
+        // e não se perca o palpite por uma falha momentânea de rede.
+        latest.current.dirty = true
+        setSaveState('error')
+      } else {
+        setSaveState('saved')
         setTimeout(() => setSaveState('idle'), 2000)
       }
     },
     [match.id, userId, supabase]
   )
 
+  // Persiste imediatamente o que estiver pendente, cancelando o debounce.
+  const flush = useCallback(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current)
+      timerRef.current = null
+    }
+    if (!latest.current.dirty) return
+    latest.current.dirty = false
+    savePick(latest.current.home, latest.current.away)
+  }, [savePick])
+
   function handleChange(value: string, side: 'home' | 'away') {
     if (disabled) return
     const clean = value.replace(/\D/g, '').slice(0, 2)
     if (side === 'home') setHome(clean)
     else setAway(clean)
+    latest.current[side] = clean
+    latest.current.dirty = true
 
     if (timerRef.current) clearTimeout(timerRef.current)
-    timerRef.current = setTimeout(() => {
-      const h = side === 'home' ? clean : home
-      const a = side === 'away' ? clean : away
-      savePick(h, a)
-    }, 800)
+    timerRef.current = setTimeout(flush, 800)
   }
 
-  useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current) }, [])
+  // Ao desmontar (troca de filtro/aba), grava o pendente em vez de descartá-lo.
+  useEffect(() => () => { flush() }, [flush])
 
   const points = pick?.points_earned
   const showPoints = isFinished && points !== null && points !== undefined
@@ -124,6 +147,7 @@ export function MatchCard({ match, pick, isDeadlinePassed, userId }: MatchCardPr
           <Input
             value={home}
             onChange={(e) => handleChange(e.target.value, 'home')}
+            onBlur={flush}
             disabled={disabled}
             placeholder="0"
             className="w-12 h-10 text-center text-lg font-bold p-1 disabled:opacity-50"
@@ -133,6 +157,7 @@ export function MatchCard({ match, pick, isDeadlinePassed, userId }: MatchCardPr
           <Input
             value={away}
             onChange={(e) => handleChange(e.target.value, 'away')}
+            onBlur={flush}
             disabled={disabled}
             placeholder="0"
             className="w-12 h-10 text-center text-lg font-bold p-1 disabled:opacity-50"
