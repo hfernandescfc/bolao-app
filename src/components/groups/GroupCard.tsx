@@ -16,11 +16,12 @@ interface GroupCardProps {
   pick: GroupPick | null
   isDeadlinePassed: boolean
   userId: string
+  onSaved?: (groupId: string) => void
 }
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'error'
 
-export function GroupCard({ group, teams, pick, isDeadlinePassed, userId }: GroupCardProps) {
+export function GroupCard({ group, teams, pick, isDeadlinePassed, userId, onSaved }: GroupCardProps) {
   const [first, setFirst] = useState<string>(pick?.first_place?.toString() ?? '')
   const [second, setSecond] = useState<string>(pick?.second_place?.toString() ?? '')
   const [saveState, setSaveState] = useState<SaveState>('idle')
@@ -43,9 +44,12 @@ export function GroupCard({ group, teams, pick, isDeadlinePassed, userId }: Grou
         { onConflict: 'user_id,group_id' }
       )
       setSaveState(error ? 'error' : 'saved')
-      if (!error) setTimeout(() => setSaveState('idle'), 2000)
+      if (!error) {
+        onSaved?.(group.id)
+        setTimeout(() => setSaveState('idle'), 2000)
+      }
     },
-    [group.id, userId, supabase]
+    [group.id, userId, supabase, onSaved]
   )
 
   function handleFirst(value: string | null) {

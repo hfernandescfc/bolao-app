@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { GroupCard } from '@/components/groups/GroupCard'
+import { GroupList } from '@/components/groups/GroupList'
 import { Group, Team, GroupPick, PICKS_DEADLINE } from '@/types'
 import { getT } from '@/lib/i18n/server'
 
@@ -34,7 +34,6 @@ export default async function GroupsPage() {
   }
 
   const isDeadlinePassed = new Date() >= PICKS_DEADLINE
-  const filledCount = Object.keys(picks).length
 
   return (
     <div>
@@ -47,37 +46,16 @@ export default async function GroupsPage() {
         )}
       </div>
 
-      <div className="mb-4">
-        <div className="flex items-center justify-between mb-1">
-          <span className="text-sm text-gray-600">{filledCount}/12 {t.groups.filled}</span>
-        </div>
-        <div className="w-full bg-gray-100 rounded-full h-2">
-          <div
-            className="bg-green-600 h-2 rounded-full transition-all"
-            style={{ width: `${(filledCount / 12) * 100}%` }}
-          />
-        </div>
-      </div>
-
-      {!isDeadlinePassed && (
-        <p className="text-xs text-gray-500 mb-4">{t.groups.instruction}</p>
-      )}
-
       {groups.length === 0 ? (
         <p className="text-center text-gray-400 py-12">{t.groups.empty}</p>
       ) : (
-        <div className="space-y-3">
-          {groups.map((group) => (
-            <GroupCard
-              key={group.id}
-              group={group}
-              teams={teamsByGroup[group.id] ?? []}
-              pick={picks[group.id] ?? null}
-              isDeadlinePassed={isDeadlinePassed}
-              userId={user.id}
-            />
-          ))}
-        </div>
+        <GroupList
+          groups={groups}
+          teamsByGroup={teamsByGroup}
+          picks={picks}
+          isDeadlinePassed={isDeadlinePassed}
+          userId={user.id}
+        />
       )}
     </div>
   )
