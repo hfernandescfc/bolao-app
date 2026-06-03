@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Users, CheckCircle2, ChevronRight, ScrollText } from 'lucide-react'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { RankingTable } from '@/components/ranking/RankingTable'
 import { NextMatchesCard } from '@/components/dashboard/NextMatchesCard'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -16,6 +16,10 @@ export default async function DashboardPage() {
   if (!user) redirect('/login')
 
   const nowIso = new Date().toISOString()
+  // O ranking e a contagem de participantes precisam enxergar todos os perfis
+  // aprovados; a RLS de `profiles` limita o usuário ao próprio perfil, então
+  // essas duas leituras usam o service role (sem sessão) para ignorar a RLS.
+  const service = createAdminClient()
 
   const [
     { data: leaderboardRaw },
@@ -28,14 +32,15 @@ export default async function DashboardPage() {
     t,
     locale,
   ] = await Promise.all([
-    supabase
+    service
       .from('leaderboard')
-      .select('*, profile:profiles(display_name, email)')
+      .select('*, profile:profiles!inner(display_name, is_approved)')
+      .eq('profile.is_approved', true)
       .order('total_points', { ascending: false })
       .order('exact_score_count', { ascending: false }),
     supabase.from('match_picks').select('match_id, home_score, away_score').eq('user_id', user.id),
     supabase.from('group_picks').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
-    supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('is_approved', true),
+    service.from('profiles').select('*', { count: 'exact', head: true }).eq('is_approved', true),
     supabase.from('matches').select('*', { count: 'exact', head: true }),
     supabase.from('groups').select('*', { count: 'exact', head: true }),
     supabase

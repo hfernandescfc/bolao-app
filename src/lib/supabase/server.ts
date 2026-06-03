@@ -1,4 +1,5 @@
 import { createServerClient } from '@supabase/ssr'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 
 export async function createClient() {
@@ -23,6 +24,20 @@ export async function createClient() {
         },
       },
     }
+  )
+}
+
+/**
+ * Cliente com a service role key e SEM sessão de usuário — ignora a RLS de
+ * verdade. Diferente de `createServiceClient`, que anexa os cookies do usuário
+ * (e por isso acaba agindo como o próprio usuário). Use só no servidor e apenas
+ * para leituras/escritas deliberadas que precisam ver além do próprio usuário.
+ */
+export function createAdminClient() {
+  return createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { persistSession: false, autoRefreshToken: false } }
   )
 }
 
