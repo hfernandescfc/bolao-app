@@ -66,7 +66,17 @@ function DemoGroupCard({ group, teams, initialFirst, initialSecond, onSave }: De
           <Label className="text-xs text-gray-500 mb-1 block">{t.groups.first}</Label>
           <Select value={first} onValueChange={handleFirst}>
             <SelectTrigger className="h-9 text-xs">
-              <SelectValue placeholder={t.groups.selectPlaceholder} />
+              <SelectValue placeholder={t.groups.selectPlaceholder}>
+                {(value: string | null) => {
+                  const tm = teams.find((x) => x.id.toString() === value)
+                  return tm ? (
+                    <span className="inline-flex items-center gap-1.5">
+                      <Flag code={tm.code} size={16} />
+                      {tm.name}
+                    </span>
+                  ) : t.groups.selectPlaceholder
+                }}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {teams.filter(t => t.id.toString() !== second).map(t => (
@@ -84,7 +94,17 @@ function DemoGroupCard({ group, teams, initialFirst, initialSecond, onSave }: De
           <Label className="text-xs text-gray-500 mb-1 block">{t.groups.second}</Label>
           <Select value={second} onValueChange={handleSecond} disabled={!first}>
             <SelectTrigger className="h-9 text-xs">
-              <SelectValue placeholder={t.groups.selectPlaceholder} />
+              <SelectValue placeholder={t.groups.selectPlaceholder}>
+                {(value: string | null) => {
+                  const tm = teams.find((x) => x.id.toString() === value)
+                  return tm ? (
+                    <span className="inline-flex items-center gap-1.5">
+                      <Flag code={tm.code} size={16} />
+                      {tm.name}
+                    </span>
+                  ) : t.groups.selectPlaceholder
+                }}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {teams.filter(t => t.id.toString() !== first).map(t => (
