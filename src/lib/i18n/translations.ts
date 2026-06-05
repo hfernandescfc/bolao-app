@@ -3,6 +3,11 @@ export const translations = {
     app: { name: 'Bolão dos Bezerra COPA 2026' },
     nav: { signOut: 'Sair', ranking: 'Ranking', matches: 'Partidas', groups: 'Grupos', table: 'Tabela', mine: 'Meus', admin: 'Admin' },
     auth: {
+      social: {
+        or: 'ou',
+        google: 'Continuar com Google',
+        error: 'Não foi possível entrar com o Google. Tente novamente.',
+      },
       signIn: {
         subtitle: 'Entre na sua conta',
         emailLabel: 'Email', emailPlaceholder: 'seu@email.com',
@@ -139,6 +144,11 @@ export const translations = {
     app: { name: 'Bezerra 2026 World Cup Pool' },
     nav: { signOut: 'Sign out', ranking: 'Ranking', matches: 'Matches', groups: 'Groups', table: 'Table', mine: 'Mine', admin: 'Admin' },
     auth: {
+      social: {
+        or: 'or',
+        google: 'Continue with Google',
+        error: 'Could not sign in with Google. Please try again.',
+      },
       signIn: {
         subtitle: 'Sign in to your account',
         emailLabel: 'Email', emailPlaceholder: 'your@email.com',

@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react'
 import Link from 'next/link'
 import { register } from '@/app/actions/auth'
+import { GoogleButton } from '@/components/auth/GoogleButton'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -75,6 +76,8 @@ export default function RegisterPage() {
             {isPending ? s.submitting : s.submit}
           </Button>
         </form>
+
+        <GoogleButton />
 
         <p className="text-center text-sm text-gray-500 mt-6">
           {s.hasAccount}{' '}
