@@ -52,7 +52,8 @@ export async function register(formData: FormData) {
   })
 
   if (error) {
-    // Loga o erro completo no servidor (visível nos logs da Vercel)
+    // Mantém o erro completo nos logs do servidor (Vercel) para diagnóstico,
+    // sem expor detalhes técnicos ao usuário.
     console.error('[register] signUp falhou:', {
       status: error.status,
       code: error.code,
@@ -62,9 +63,9 @@ export async function register(formData: FormData) {
     if (error.message.includes('already registered')) {
       return { error: 'Este email já está cadastrado.' }
     }
-    // Mostra a razão real (sem máscara) para diagnóstico
-    const detail = [error.code, error.message].filter(Boolean).join(' — ')
-    return { error: `Falha no cadastro: ${detail || 'erro desconhecido'} (status ${error.status ?? '?'})` }
+    return {
+      error: 'Não foi possível concluir o cadastro. Verifique os dados e tente novamente. Se o problema continuar, fale com o organizador.',
+    }
   }
 
   redirect('/aguardando-aprovacao')
