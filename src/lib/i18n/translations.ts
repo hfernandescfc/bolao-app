@@ -106,7 +106,7 @@ export const translations = {
     groups: {
       title: 'Palpites — Grupos', deadlinePassed: 'Prazo encerrado',
       filled: 'grupos preenchidos',
-      instruction: 'Escolha os 2 times classificados de cada grupo (posição não importa).',
+      instruction: 'Escolha o 1º e o 2º colocados de cada grupo. A ordem importa.',
       empty: 'Os grupos serão carregados em breve.',
       first: '1º Lugar', second: '2º Lugar', selectPlaceholder: 'Selecione...', error: 'Erro',
     },
@@ -249,7 +249,7 @@ export const translations = {
     groups: {
       title: 'Picks — Groups', deadlinePassed: 'Deadline passed',
       filled: 'groups filled',
-      instruction: "Choose the 2 qualifying teams from each group (order doesn't matter).",
+      instruction: 'Choose the 1st and 2nd place teams from each group. Order matters.',
       empty: 'Groups will be loaded soon.',
       first: '1st Place', second: '2nd Place', selectPlaceholder: 'Select...', error: 'Error',
     },
