@@ -107,15 +107,15 @@ function testPureLogic() {
   console.log('\n🧮 PARTE 1 — Lógica de pontuação (sem banco)')
 
   // Partidas
-  eq('placar exato vale 3', calculateMatchPoints({ home_score: 2, away_score: 1 }, { home_score: 2, away_score: 1 }), 3)
-  eq('resultado certo, placar errado vale 1', calculateMatchPoints({ home_score: 1, away_score: 0 }, { home_score: 3, away_score: 0 }), 1)
-  eq('empate (placar diferente) vale 1', calculateMatchPoints({ home_score: 0, away_score: 0 }, { home_score: 2, away_score: 2 }), 1)
+  eq('placar exato vale 7', calculateMatchPoints({ home_score: 2, away_score: 1 }, { home_score: 2, away_score: 1 }), 7)
+  eq('resultado certo, placar errado vale 3', calculateMatchPoints({ home_score: 1, away_score: 0 }, { home_score: 3, away_score: 0 }), 3)
+  eq('empate (placar diferente) vale 3', calculateMatchPoints({ home_score: 0, away_score: 0 }, { home_score: 2, away_score: 2 }), 3)
   eq('resultado oposto vale 0', calculateMatchPoints({ home_score: 0, away_score: 1 }, { home_score: 2, away_score: 0 }), 0)
 
   // Grupos
-  eq('acertou os 2 classificados vale 2', calculateGroupPoints({ first_place: 1, second_place: 2 }, { first_place: 1, second_place: 2 }), 2)
-  eq('ordem trocada ainda vale 2', calculateGroupPoints({ first_place: 2, second_place: 1 }, { first_place: 1, second_place: 2 }), 2)
-  eq('acertou só um classificado vale 1', calculateGroupPoints({ first_place: 1, second_place: 3 }, { first_place: 1, second_place: 2 }), 1)
+  eq('2 classificados na ordem vale 10', calculateGroupPoints({ first_place: 1, second_place: 2 }, { first_place: 1, second_place: 2 }), 10)
+  eq('2 classificados fora de ordem vale 6', calculateGroupPoints({ first_place: 2, second_place: 1 }, { first_place: 1, second_place: 2 }), 6)
+  eq('acertou só um classificado vale 2', calculateGroupPoints({ first_place: 1, second_place: 3 }, { first_place: 1, second_place: 2 }), 2)
   eq('errou os dois vale 0', calculateGroupPoints({ first_place: 3, second_place: 4 }, { first_place: 1, second_place: 2 }), 0)
 
   // Classificação: confere ordem e desempate por saldo
@@ -148,14 +148,15 @@ function pickFor(userKey: string, real: { hs: number; as: number }): { hs: numbe
   return { hs: 0, as: 1 } // vitória mandante -> vitória visitante
 }
 // Pontos de partida esperados por perfil (independente do calculator)
-const EXPECTED_MATCH_PTS: Record<string, number> = { A: 3, B: 1, C: 0 }
-// Palpite de classificados e pontos esperados por perfil
+const EXPECTED_MATCH_PTS: Record<string, number> = { A: 7, B: 3, C: 0 }
+// Palpite de classificados e pontos esperados por perfil.
+// Real do grupo: 1º ZT1, 2º ZT2.
 const GROUP_PICK: Record<string, [string, string]> = {
-  A: ['ZT1', 'ZT2'], // ambos certos -> 2
-  B: ['ZT1', 'ZT3'], // só o 1º certo -> 1
+  A: ['ZT1', 'ZT2'], // ambos na ordem certa -> 10
+  B: ['ZT1', 'ZT3'], // só o 1º certo -> 2
   C: ['ZT4', 'ZT3'], // nenhum -> 0
 }
-const EXPECTED_GROUP_PTS: Record<string, number> = { A: 2, B: 1, C: 0 }
+const EXPECTED_GROUP_PTS: Record<string, number> = { A: 10, B: 2, C: 0 }
 
 // ---------------------------------------------------------------------------
 // Cleanup (idempotente)
@@ -304,7 +305,7 @@ async function testDatabaseFlow() {
   const lbByUser = new Map<string, Record<string, number>>()
   for (const r of lb ?? []) lbByUser.set(r.user_id, r)
 
-  const expectedMatchTotal: Record<string, number> = { A: 18, B: 6, C: 0 }
+  const expectedMatchTotal: Record<string, number> = { A: 42, B: 18, C: 0 } // 6 partidas × 7 (exato) / 3 (resultado)
   const expectedExact: Record<string, number> = { A: 6, B: 0, C: 0 }
   const expectedCorrect: Record<string, number> = { A: 0, B: 6, C: 0 }
   for (const u of USERS) {

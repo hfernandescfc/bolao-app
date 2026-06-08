@@ -33,7 +33,9 @@ export default async function RulesPage() {
       <RuleCard icon={Shield} title={r.groupTitle}>
         <p className="mb-2">{r.groupText}</p>
         <ul className="space-y-1">
-          <Bullet color="bg-green-600">{r.groupPoint}</Bullet>
+          <Bullet color="bg-green-600">{r.groupOrder}</Bullet>
+          <Bullet color="bg-yellow-500">{r.groupSwapped}</Bullet>
+          <Bullet color="bg-gray-300">{r.groupOne}</Bullet>
         </ul>
       </RuleCard>
 
