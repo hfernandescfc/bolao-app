@@ -115,6 +115,11 @@ export const translations = {
       matchSection: 'Palpites de Partidas', groupSection: 'Palpites de Grupos',
       noPicks: 'Nenhum palpite ainda.', group: 'Grupo',
     },
+    participantPicks: {
+      back: 'Voltar ao ranking',
+      picksOf: 'Palpites de',
+      locked: 'Os palpites dos participantes ficam visíveis para todos somente após o início da Copa.',
+    },
     standings: {
       title: 'Tabela dos Grupos',
       subtitle: 'Como ficariam as classificações segundo seus palpites de placar. Jogos já encerrados usam o resultado real.',
@@ -257,6 +262,11 @@ export const translations = {
       title: 'My Picks', total: 'Total', matches: 'Matches', groups: 'Groups',
       matchSection: 'Match Picks', groupSection: 'Group Picks',
       noPicks: 'No picks yet.', group: 'Group',
+    },
+    participantPicks: {
+      back: 'Back to ranking',
+      picksOf: 'Picks of',
+      locked: "Participants' picks become visible to everyone only after the World Cup starts.",
     },
     standings: {
       title: 'Group Table',

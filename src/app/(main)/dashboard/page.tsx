@@ -179,7 +179,7 @@ export default async function DashboardPage() {
       {/* Ranking geral */}
       <div className="pt-1">
         <h2 className="text-sm font-semibold text-gray-600 mb-2">{t.dashboard.fullRanking}</h2>
-        <RankingTable entries={leaderboard} currentUserId={user.id} t={t.ranking} />
+        <RankingTable entries={leaderboard} currentUserId={user.id} t={t.ranking} picksVisible={isDeadlinePassed} />
         {leaderboard.length === 0 && (
           <p className="text-center text-gray-400 text-sm pt-4">{t.dashboard.empty}</p>
         )}

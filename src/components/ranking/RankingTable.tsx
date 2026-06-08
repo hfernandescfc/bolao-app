@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { LeaderboardEntry } from '@/types'
 import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -8,11 +9,13 @@ interface RankingTableProps {
   entries: LeaderboardEntry[]
   currentUserId: string
   t: Translations['ranking']
+  /** Quando true, o nome vira link para os palpites do participante. */
+  picksVisible?: boolean
 }
 
 const medalColors = ['text-yellow-500', 'text-gray-400', 'text-amber-600']
 
-export function RankingTable({ entries, currentUserId, t }: RankingTableProps) {
+export function RankingTable({ entries, currentUserId, t, picksVisible = false }: RankingTableProps) {
   return (
     <div className="rounded-xl overflow-hidden border border-gray-100 shadow-sm bg-white">
       <Table>
@@ -49,7 +52,16 @@ export function RankingTable({ entries, currentUserId, t }: RankingTableProps) {
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
-                    <span className="text-sm">{entry.profile?.display_name ?? t.participant}</span>
+                    {picksVisible ? (
+                      <Link
+                        href={`/participantes/${entry.user_id}`}
+                        className="text-sm text-green-700 hover:underline"
+                      >
+                        {entry.profile?.display_name ?? t.participant}
+                      </Link>
+                    ) : (
+                      <span className="text-sm">{entry.profile?.display_name ?? t.participant}</span>
+                    )}
                     {isMe && (
                       <Badge variant="outline" className="text-[10px] py-0 border-green-600 text-green-700">
                         {t.you}
