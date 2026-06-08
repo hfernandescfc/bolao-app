@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { Users, CheckCircle2, ChevronRight, ScrollText } from 'lucide-react'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { RankingTable } from '@/components/ranking/RankingTable'
-import { NextMatchesCard } from '@/components/dashboard/NextMatchesCard'
+import { NextMatchesCard, type ResultDistribution } from '@/components/dashboard/NextMatchesCard'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { LeaderboardEntry, Match, MatchPick, PICKS_DEADLINE } from '@/types'
 import { getT, getLocale } from '@/lib/i18n/server'
@@ -72,6 +72,28 @@ export default async function DashboardPage() {
   const pendingGroups = Math.max(0, groupsTot - gpCount)
   const isDeadlinePassed = new Date() >= PICKS_DEADLINE
   const allFilled = matchesTot > 0 && pendingMatches === 0 && pendingGroups === 0
+
+  // Distribuição dos palpites (1/X/2) dos próximos jogos — só após o início da
+  // Copa, quando os palpites já estão travados. Usa o service role para somar
+  // os palpites de todos os participantes (a RLS limitaria ao próprio usuário).
+  let distribution: Record<number, ResultDistribution> | undefined
+  if (isDeadlinePassed && upcoming.length > 0) {
+    const { data: allPicks } = await service
+      .from('match_picks')
+      .select('match_id, home_score, away_score')
+      .in('match_id', upcoming.map((m) => m.id))
+
+    distribution = {}
+    for (const m of upcoming) distribution[m.id] = { home: 0, draw: 0, away: 0, total: 0 }
+    for (const p of allPicks ?? []) {
+      const d = distribution[p.match_id]
+      if (!d) continue
+      if (p.home_score > p.away_score) d.home++
+      else if (p.home_score < p.away_score) d.away++
+      else d.draw++
+      d.total++
+    }
+  }
 
   return (
     <div className="space-y-4">
@@ -158,6 +180,7 @@ export default async function DashboardPage() {
         locale={locale}
         isDeadlinePassed={isDeadlinePassed}
         t={t.dashboard}
+        distribution={distribution}
       />
 
       {/* Regras do bolão */}

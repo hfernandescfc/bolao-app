@@ -5,12 +5,22 @@ import { Flag } from '@/components/ui/flag'
 import type { Match, MatchPick } from '@/types'
 import type { Translations } from '@/lib/i18n/translations'
 
+/** Distribuição dos palpites de um confronto por resultado (1 / X / 2). */
+export interface ResultDistribution {
+  home: number
+  draw: number
+  away: number
+  total: number
+}
+
 interface NextMatchesCardProps {
   matches: Match[]
   pickByMatchId: Record<number, MatchPick>
   locale: string
   isDeadlinePassed: boolean
   t: Translations['dashboard']
+  /** Por match_id; presente só após o início da Copa. */
+  distribution?: Record<number, ResultDistribution>
 }
 
 function formatDate(dateStr: string, locale: string) {
@@ -20,7 +30,7 @@ function formatDate(dateStr: string, locale: string) {
   })
 }
 
-export function NextMatchesCard({ matches, pickByMatchId, locale, isDeadlinePassed, t }: NextMatchesCardProps) {
+export function NextMatchesCard({ matches, pickByMatchId, locale, isDeadlinePassed, t, distribution }: NextMatchesCardProps) {
   return (
     <Card>
       <CardHeader className="pb-2">
@@ -62,11 +72,36 @@ export function NextMatchesCard({ matches, pickByMatchId, locale, isDeadlinePass
                     </Link>
                   )}
                 </div>
+                {(() => {
+                  const d = distribution?.[m.id]
+                  if (!d || d.total === 0) return null
+                  return (
+                    <div className="mt-2 pt-2 border-t border-gray-50 space-y-1">
+                      <DistributionBar label={m.home_team?.name ?? ''} count={d.home} total={d.total} color="bg-emerald-500" />
+                      <DistributionBar label={t.draw} count={d.draw} total={d.total} color="bg-gray-400" />
+                      <DistributionBar label={m.away_team?.name ?? ''} count={d.away} total={d.total} color="bg-sky-500" />
+                      <p className="text-[10px] text-gray-400 text-right">{d.total} {t.picksCount}</p>
+                    </div>
+                  )
+                })()}
               </div>
             )
           })
         )}
       </CardContent>
     </Card>
+  )
+}
+
+function DistributionBar({ label, count, total, color }: { label: string; count: number; total: number; color: string }) {
+  const pct = total > 0 ? Math.round((count / total) * 100) : 0
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-[10px] text-gray-500 w-16 truncate text-right shrink-0">{label}</span>
+      <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+        <div className={`h-full rounded-full ${color}`} style={{ width: `${pct}%` }} />
+      </div>
+      <span className="text-[10px] text-gray-500 w-8 text-right shrink-0 tabular-nums">{pct}%</span>
+    </div>
   )
 }
