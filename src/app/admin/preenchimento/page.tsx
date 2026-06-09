@@ -1,4 +1,5 @@
 import { createAdminClient } from '@/lib/supabase/server'
+import { fetchAllRows } from '@/lib/supabase/paginate'
 import { Badge } from '@/components/ui/badge'
 import { CheckCircle2 } from 'lucide-react'
 
@@ -15,16 +16,19 @@ export default async function AdminFillingPage() {
   // próprio usuário, por isso usa o service role (sem sessão), ignorando a RLS.
   const admin = createAdminClient()
 
+  // `match_picks`/`group_picks` são lidas POR INTEIRO para contar por usuário.
+  // Sem paginar, o limite de 1000 linhas do PostgREST trunca em silêncio (72
+  // jogos × ~14 participantes já passam de 1000) e palpites "somem" da tela.
   const [
     { data: profilesRaw },
-    { data: matchPicksRaw },
-    { data: groupPicksRaw },
+    matchPicksRaw,
+    groupPicksRaw,
     { count: matchesTotal },
     { count: groupsTotal },
   ] = await Promise.all([
     admin.from('profiles').select('id, display_name, email, is_approved').eq('is_approved', true).order('display_name'),
-    admin.from('match_picks').select('user_id'),
-    admin.from('group_picks').select('user_id'),
+    fetchAllRows<{ user_id: string }>(() => admin.from('match_picks').select('user_id')),
+    fetchAllRows<{ user_id: string }>(() => admin.from('group_picks').select('user_id')),
     admin.from('matches').select('*', { count: 'exact', head: true }),
     admin.from('groups').select('*', { count: 'exact', head: true }),
   ])
@@ -33,9 +37,9 @@ export default async function AdminFillingPage() {
   const groupTotal = groupsTotal ?? 0
 
   const mpByUser = new Map<string, number>()
-  for (const r of matchPicksRaw ?? []) mpByUser.set(r.user_id, (mpByUser.get(r.user_id) ?? 0) + 1)
+  for (const r of matchPicksRaw) mpByUser.set(r.user_id, (mpByUser.get(r.user_id) ?? 0) + 1)
   const gpByUser = new Map<string, number>()
-  for (const r of groupPicksRaw ?? []) gpByUser.set(r.user_id, (gpByUser.get(r.user_id) ?? 0) + 1)
+  for (const r of groupPicksRaw) gpByUser.set(r.user_id, (gpByUser.get(r.user_id) ?? 0) + 1)
 
   const isComplete = (u: UserRow) =>
     matchTotal > 0 && u.matchCount >= matchTotal && groupTotal > 0 && u.groupCount >= groupTotal

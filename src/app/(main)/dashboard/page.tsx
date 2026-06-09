@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Users, CheckCircle2, ChevronRight, ScrollText } from 'lucide-react'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { fetchAllRows } from '@/lib/supabase/paginate'
 import { RankingTable } from '@/components/ranking/RankingTable'
 import { NextMatchesCard, type ResultDistribution } from '@/components/dashboard/NextMatchesCard'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -78,10 +79,14 @@ export default async function DashboardPage() {
   // os palpites de todos os participantes (a RLS limitaria ao próprio usuário).
   let distribution: Record<number, ResultDistribution> | undefined
   if (isDeadlinePassed && upcoming.length > 0) {
-    const { data: allPicks } = await service
-      .from('match_picks')
-      .select('match_id, home_score, away_score')
-      .in('match_id', upcoming.map((m) => m.id))
+    // Paginado: a soma cobre todos os participantes (5 jogos × N pode passar de
+    // 1000 linhas e seria truncada em silêncio sem paginar).
+    const allPicks = await fetchAllRows<{ match_id: number; home_score: number; away_score: number }>(() =>
+      service
+        .from('match_picks')
+        .select('match_id, home_score, away_score')
+        .in('match_id', upcoming.map((m) => m.id))
+    )
 
     distribution = {}
     for (const m of upcoming) distribution[m.id] = { home: 0, draw: 0, away: 0, total: 0 }
