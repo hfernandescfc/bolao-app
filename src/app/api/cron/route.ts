@@ -41,12 +41,20 @@ export async function GET(request: NextRequest) {
 
       if (!hasChanged) continue
 
+      // Persiste o placar também durante o jogo (LIVE/PAUSED): a API devolve o
+      // parcial e o app mostra placar ao vivo + pontos provisórios. Os pontos
+      // definitivos continuam sendo calculados só na transição para FINISHED.
+      const hasScore =
+        (newStatus === 'FINISHED' || newStatus === 'LIVE' || newStatus === 'PAUSED') &&
+        homeScore !== null &&
+        awayScore !== null
+
       await supabase
         .from('matches')
         .update({
           status: newStatus,
-          home_score: newStatus === 'FINISHED' ? homeScore : existing.home_score,
-          away_score: newStatus === 'FINISHED' ? awayScore : existing.away_score,
+          home_score: hasScore ? homeScore : existing.home_score,
+          away_score: hasScore ? awayScore : existing.away_score,
           updated_at: new Date().toISOString(),
         })
         .eq('id', existing.id)

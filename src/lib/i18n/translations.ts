@@ -65,6 +65,7 @@ export const translations = {
       nextMatches: 'Próximos jogos', yourPick: 'Seu palpite', noPick: 'Sem palpite', makePick: 'Palpitar',
       noUpcoming: 'Nenhum jogo agendado por enquanto.',
       draw: 'Empate', picksCount: 'palpites',
+      live: 'AO VIVO', ifItStays: 'Se terminar assim', seeAllPicks: 'Ver palpites de todos',
       rulesTitle: 'Regras do bolão', rulesCta: 'Ver regras e pontuação',
       fullRanking: 'Ranking geral',
     },
@@ -103,6 +104,17 @@ export const translations = {
       unsaved: 'Salve ou descarte o palpite atual antes de abrir outro confronto.',
       groupPreview: 'Como fica o grupo com seus palpites (incluindo este)',
       qualifyLegend: 'Em verde, as duas vagas de classificação.',
+      ifItStays: 'Se terminar assim', seeAllPicks: 'Ver palpites de todos',
+    },
+    matchDetail: {
+      back: 'Voltar às partidas',
+      title: 'Palpites do confronto',
+      locked: 'Os palpites deste jogo ficam visíveis para todos somente após o início da Copa.',
+      picked: 'palpitaram este jogo',
+      noPicks: 'Ninguém palpitou neste jogo.',
+      provisionalNote: 'Pontos parciais — o jogo está em andamento.',
+      finished: 'Encerrado', live: 'AO VIVO', scheduled: 'Agendado',
+      draw: 'Empate',
     },
     groups: {
       title: 'Palpites — Grupos', deadlinePassed: 'Prazo encerrado',
@@ -135,6 +147,7 @@ export const translations = {
     ranking: {
       name: 'Nome', pts: 'Pts', exact: 'Exatos',
       empty: 'Ainda sem pontuações', you: 'Você', participant: 'Participante',
+      liveProvisional: 'Ordem provisória, considerando os jogos ao vivo como estão agora.',
     },
     demo: {
       banner: '🎮 Modo Demo — dados fictícios, salvo em localStorage.',
@@ -214,6 +227,7 @@ export const translations = {
       nextMatches: 'Upcoming matches', yourPick: 'Your pick', noPick: 'No pick', makePick: 'Predict',
       noUpcoming: 'No scheduled matches for now.',
       draw: 'Draw', picksCount: 'picks',
+      live: 'LIVE', ifItStays: 'If it stays like this', seeAllPicks: "See everyone's picks",
       rulesTitle: 'Pool rules', rulesCta: 'See rules and scoring',
       fullRanking: 'Overall ranking',
     },
@@ -252,6 +266,17 @@ export const translations = {
       unsaved: 'Save or discard the current pick before opening another match.',
       groupPreview: 'How the group looks with your picks (including this one)',
       qualifyLegend: 'Green rows are the two qualifying spots.',
+      ifItStays: 'If it stays like this', seeAllPicks: "See everyone's picks",
+    },
+    matchDetail: {
+      back: 'Back to matches',
+      title: 'Match picks',
+      locked: "This match's picks become visible to everyone only after the World Cup starts.",
+      picked: 'predicted this match',
+      noPicks: 'No one predicted this match.',
+      provisionalNote: 'Partial points — the match is in progress.',
+      finished: 'Finished', live: 'LIVE', scheduled: 'Scheduled',
+      draw: 'Draw',
     },
     groups: {
       title: 'Picks — Groups', deadlinePassed: 'Deadline passed',
@@ -284,6 +309,7 @@ export const translations = {
     ranking: {
       name: 'Name', pts: 'Pts', exact: 'Exact',
       empty: 'No scores yet', you: 'You', participant: 'Participant',
+      liveProvisional: 'Provisional order, counting live matches as they stand.',
     },
     demo: {
       banner: '🎮 Demo Mode — fake data, saved in localStorage.',

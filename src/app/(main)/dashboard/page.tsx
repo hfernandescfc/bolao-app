@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { Users, CheckCircle2, ChevronRight, ScrollText } from 'lucide-react'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { fetchAllRows } from '@/lib/supabase/paginate'
+import { calculateMatchPoints } from '@/lib/scoring/calculator'
 import { RankingTable } from '@/components/ranking/RankingTable'
 import { NextMatchesCard, type ResultDistribution } from '@/components/dashboard/NextMatchesCard'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -30,6 +31,7 @@ export default async function DashboardPage() {
     { count: matchesTotal },
     { count: groupsTotal },
     { data: upcomingRaw },
+    { data: liveRaw },
     t,
     locale,
   ] = await Promise.all([
@@ -51,6 +53,11 @@ export default async function DashboardPage() {
       .gte('scheduled_at', nowIso)
       .order('scheduled_at', { ascending: true })
       .limit(5),
+    supabase
+      .from('matches')
+      .select('*, home_team:teams!matches_home_team_id_fkey(*), away_team:teams!matches_away_team_id_fkey(*)')
+      .in('status', ['LIVE', 'PAUSED'])
+      .order('scheduled_at', { ascending: true }),
     getT(),
     getLocale(),
   ])
@@ -64,7 +71,9 @@ export default async function DashboardPage() {
   const pickByMatchId: Record<number, MatchPick> = {}
   for (const p of matchPicks) pickByMatchId[p.match_id] = p as MatchPick
 
-  const upcoming = (upcomingRaw ?? []) as Match[]
+  // Jogos ao vivo aparecem primeiro no card, seguidos dos próximos agendados.
+  const liveMatches = (liveRaw ?? []) as Match[]
+  const upcoming = [...liveMatches, ...((upcomingRaw ?? []) as Match[])]
 
   const matchesTot = matchesTotal ?? 0
   const groupsTot = groupsTotal ?? 0
@@ -97,6 +106,29 @@ export default async function DashboardPage() {
       else if (p.home_score < p.away_score) d.away++
       else d.draw++
       d.total++
+    }
+  }
+
+  // Ranking provisório: soma, por usuário, os pontos que os palpites dos jogos
+  // AO VIVO renderiam se o placar atual fosse o final. O ranking oficial só
+  // muda quando o jogo encerra (points_earned + recalculate_leaderboard).
+  let liveDelta: Record<string, number> | undefined
+  const liveWithScore = liveMatches.filter((m) => m.home_score !== null && m.away_score !== null)
+  if (liveWithScore.length > 0) {
+    const livePicks = await fetchAllRows<{ user_id: string; match_id: number; home_score: number; away_score: number }>(
+      () =>
+        service
+          .from('match_picks')
+          .select('user_id, match_id, home_score, away_score')
+          .in('match_id', liveWithScore.map((m) => m.id))
+    )
+    const scoreByMatch = new Map(liveWithScore.map((m) => [m.id, { home_score: m.home_score!, away_score: m.away_score! }]))
+    liveDelta = {}
+    for (const p of livePicks) {
+      const real = scoreByMatch.get(p.match_id)
+      if (!real) continue
+      const pts = calculateMatchPoints({ home_score: p.home_score, away_score: p.away_score }, real)
+      liveDelta[p.user_id] = (liveDelta[p.user_id] ?? 0) + pts
     }
   }
 
@@ -207,7 +239,7 @@ export default async function DashboardPage() {
       {/* Ranking geral */}
       <div className="pt-1">
         <h2 className="text-sm font-semibold text-gray-600 mb-2">{t.dashboard.fullRanking}</h2>
-        <RankingTable entries={leaderboard} currentUserId={user.id} t={t.ranking} picksVisible={isDeadlinePassed} />
+        <RankingTable entries={leaderboard} currentUserId={user.id} t={t.ranking} picksVisible={isDeadlinePassed} liveDelta={liveDelta} />
         {leaderboard.length === 0 && (
           <p className="text-center text-gray-400 text-sm pt-4">{t.dashboard.empty}</p>
         )}

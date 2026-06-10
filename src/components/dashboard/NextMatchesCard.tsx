@@ -1,7 +1,9 @@
 import Link from 'next/link'
 import { Clock, ChevronRight } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 import { Flag } from '@/components/ui/flag'
+import { calculateMatchPoints } from '@/lib/scoring/calculator'
 import type { Match, MatchPick } from '@/types'
 import type { Translations } from '@/lib/i18n/translations'
 
@@ -42,27 +44,56 @@ export function NextMatchesCard({ matches, pickByMatchId, locale, isDeadlinePass
         ) : (
           matches.map((m) => {
             const pick = pickByMatchId[m.id]
+            const isLive = m.status === 'LIVE' || m.status === 'PAUSED'
+            const hasLiveScore = isLive && m.home_score !== null && m.away_score !== null
+            const livePoints =
+              hasLiveScore && pick
+                ? calculateMatchPoints(
+                    { home_score: pick.home_score, away_score: pick.away_score },
+                    { home_score: m.home_score!, away_score: m.away_score! }
+                  )
+                : null
             return (
-              <div key={m.id} className="border border-gray-100 rounded-lg p-2.5">
+              <div key={m.id} className={`border rounded-lg p-2.5 ${isLive ? 'border-yellow-400' : 'border-gray-100'}`}>
                 <div className="flex items-center gap-2">
                   <div className="flex-1 flex items-center justify-end gap-1.5 min-w-0">
                     <span className="text-xs font-medium text-gray-800 truncate">{m.home_team?.name}</span>
                     <Flag code={m.home_team?.code} size={18} />
                   </div>
-                  <span className="text-[10px] text-gray-300 font-bold shrink-0">x</span>
+                  {hasLiveScore ? (
+                    <span className="text-sm font-bold text-red-600 shrink-0 tabular-nums">
+                      {m.home_score}<span className="text-gray-300 mx-0.5">x</span>{m.away_score}
+                    </span>
+                  ) : (
+                    <span className="text-[10px] text-gray-300 font-bold shrink-0">x</span>
+                  )}
                   <div className="flex-1 flex items-center gap-1.5 min-w-0">
                     <Flag code={m.away_team?.code} size={18} />
                     <span className="text-xs font-medium text-gray-800 truncate">{m.away_team?.name}</span>
                   </div>
                 </div>
                 <div className="flex items-center justify-between mt-1.5">
-                  <span className="text-[10px] text-gray-400 flex items-center gap-1">
-                    <Clock size={10} />
-                    {formatDate(m.scheduled_at, locale)}
-                  </span>
+                  {isLive ? (
+                    <Badge variant="destructive" className="text-[10px] py-0 animate-pulse">{t.live}</Badge>
+                  ) : (
+                    <span className="text-[10px] text-gray-400 flex items-center gap-1">
+                      <Clock size={10} />
+                      {formatDate(m.scheduled_at, locale)}
+                    </span>
+                  )}
                   {pick ? (
                     <span className="text-[11px] font-medium text-green-700">
                       {t.yourPick}: {pick.home_score} x {pick.away_score}
+                      {livePoints !== null && (
+                        <span
+                          className={`ml-1.5 font-bold ${
+                            livePoints === 7 ? 'text-green-700' : livePoints === 3 ? 'text-yellow-600' : 'text-gray-400'
+                          }`}
+                          title={t.ifItStays}
+                        >
+                          +{livePoints}
+                        </span>
+                      )}
                     </span>
                   ) : isDeadlinePassed ? (
                     <span className="text-[11px] text-gray-400">{t.noPick}</span>
@@ -72,6 +103,16 @@ export function NextMatchesCard({ matches, pickByMatchId, locale, isDeadlinePass
                     </Link>
                   )}
                 </div>
+                {isDeadlinePassed && (
+                  <div className="mt-1.5 text-right">
+                    <Link
+                      href={`/matches/${m.id}`}
+                      className="text-[11px] font-medium text-green-700 inline-flex items-center gap-0.5 hover:underline"
+                    >
+                      {t.seeAllPicks} <ChevronRight size={12} />
+                    </Link>
+                  </div>
+                )}
                 {(() => {
                   const d = distribution?.[m.id]
                   if (!d || d.total === 0) return null

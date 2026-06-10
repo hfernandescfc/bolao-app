@@ -1,12 +1,14 @@
 'use client'
 
+import Link from 'next/link'
 import { Match, MatchPick } from '@/types'
 import type { TeamStanding } from '@/lib/scoring/standings'
 import type { Draft, SaveState } from './MatchList'
+import { calculateMatchPoints } from '@/lib/scoring/calculator'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Flag } from '@/components/ui/flag'
-import { Check, Clock, Loader2, ChevronDown } from 'lucide-react'
+import { Check, Clock, Loader2, ChevronDown, Users } from 'lucide-react'
 import { useT, useLocale } from '@/lib/i18n/context'
 
 interface MatchCardProps {
@@ -19,6 +21,8 @@ interface MatchCardProps {
   saveState?: SaveState
   standings?: TeamStanding[] | null
   warn?: boolean
+  /** Após o prazo, os palpites são públicos: habilita o link "ver palpites de todos". */
+  picksPublic?: boolean
   onSelect: () => void
   onChange: (value: string, side: 'home' | 'away') => void
   onSave: () => void
@@ -39,7 +43,7 @@ function formatDate(dateStr: string, locale: string) {
 
 export function MatchCard({
   match, pick, editable, expanded, draft, dirty, saveState = 'idle',
-  standings, warn, onSelect, onChange, onSave, onDiscard,
+  standings, warn, picksPublic = false, onSelect, onChange, onSave, onDiscard,
 }: MatchCardProps) {
   const t = useT()
   const { locale } = useLocale()
@@ -49,6 +53,17 @@ export function MatchCard({
 
   const points = pick?.points_earned
   const showPoints = isFinished && points !== null && points !== undefined
+
+  // Pontos provisórios durante o jogo: quanto o palpite renderia se o placar
+  // atual fosse o final. Vira definitivo (points_earned) quando encerrar.
+  const hasLiveScore = isLive && match.home_score !== null && match.away_score !== null
+  const livePoints =
+    hasLiveScore && pick
+      ? calculateMatchPoints(
+          { home_score: pick.home_score, away_score: pick.away_score },
+          { home_score: match.home_score!, away_score: match.away_score! }
+        )
+      : null
 
   const home = draft?.home ?? pick?.home_score?.toString() ?? ''
   const away = draft?.away ?? pick?.away_score?.toString() ?? ''
@@ -73,6 +88,26 @@ export function MatchCard({
           </span>
           <div className="flex items-center gap-2">
             {isLive && <Badge variant="destructive" className="text-[10px] py-0 animate-pulse">{t.matches.live}</Badge>}
+            {hasLiveScore && (
+              <span className="text-[10px] font-bold text-red-600">
+                {match.home_score} x {match.away_score}
+              </span>
+            )}
+            {livePoints !== null && (
+              <Badge
+                variant="outline"
+                title={t.matches.ifItStays}
+                className={`text-[10px] py-0 ${
+                  livePoints === 7
+                    ? 'border-green-600 text-green-700'
+                    : livePoints === 3
+                      ? 'border-yellow-500 text-yellow-600'
+                      : 'border-gray-300 text-gray-400'
+                }`}
+              >
+                +{livePoints}
+              </Badge>
+            )}
             {isFinished && (
               <span className="text-[10px] text-gray-400">
                 {match.home_score} x {match.away_score}
@@ -189,9 +224,30 @@ export function MatchCard({
               )}
             </>
           ) : (
-            <p className="text-center text-xs text-gray-400 py-2">
-              {isFinished ? `${match.home_score} x ${match.away_score}` : t.matches.deadlinePassed}
-            </p>
+            <div className="py-2 space-y-2">
+              {hasLiveScore ? (
+                <p className="text-center text-sm font-semibold text-gray-800">
+                  {match.home_score} x {match.away_score}
+                  {livePoints !== null && (
+                    <span className="block text-xs font-normal text-gray-500 mt-0.5">
+                      {t.matches.ifItStays}: <span className="font-semibold">+{livePoints} pts</span>
+                    </span>
+                  )}
+                </p>
+              ) : (
+                <p className="text-center text-xs text-gray-400">
+                  {isFinished ? `${match.home_score} x ${match.away_score}` : t.matches.deadlinePassed}
+                </p>
+              )}
+              {picksPublic && (
+                <Link
+                  href={`/matches/${match.id}`}
+                  className="flex items-center justify-center gap-1.5 text-xs font-medium text-green-700 hover:underline"
+                >
+                  <Users size={13} /> {t.matches.seeAllPicks}
+                </Link>
+              )}
+            </div>
           )}
 
           {standings && standings.length > 0 && (

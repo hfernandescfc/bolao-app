@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { createAdminClient, createClient } from '@/lib/supabase/server'
 import { scoreMatchPicks, scoreGroupPicks } from '@/lib/scoring/recalculate'
 
-export async function POST(request: NextRequest) {
+export async function POST() {
   const authClient = await createClient()
   const {
     data: { user },

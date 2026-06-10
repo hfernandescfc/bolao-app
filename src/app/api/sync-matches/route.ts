@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { fetchGroupStageMatches, mapApiStatus } from '@/lib/football-api/client'
 import { calculateMatchPoints } from '@/lib/scoring/calculator'
 import { scoreGroupPicks } from '@/lib/scoring/recalculate'
 
-export async function POST(request: NextRequest) {
+export async function POST() {
   const authClient = await createClient()
   const {
     data: { user },
@@ -50,12 +50,20 @@ export async function POST(request: NextRequest) {
 
       if (!hasChanged) continue
 
+      // Mesmo comportamento do cron: persiste o placar parcial em LIVE/PAUSED
+      // e preserva o existente nos demais casos (antes zerava, apagando o
+      // placar de um jogo cujo status oscilasse na API externa).
+      const hasScore =
+        (newStatus === 'FINISHED' || newStatus === 'LIVE' || newStatus === 'PAUSED') &&
+        homeScore !== null &&
+        awayScore !== null
+
       await supabase
         .from('matches')
         .update({
           status: newStatus,
-          home_score: newStatus === 'FINISHED' ? homeScore : null,
-          away_score: newStatus === 'FINISHED' ? awayScore : null,
+          home_score: hasScore ? homeScore : existing.home_score,
+          away_score: hasScore ? awayScore : existing.away_score,
           updated_at: new Date().toISOString(),
         })
         .eq('id', existing.id)

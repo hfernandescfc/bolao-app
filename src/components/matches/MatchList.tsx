@@ -290,6 +290,7 @@ export function MatchList({ matches, picks: initialPicks, isDeadlinePassed, user
                 saveState={expanded ? saveState : 'idle'}
                 standings={expanded ? selectedStandings : null}
                 warn={warnId === match.id}
+                picksPublic={isDeadlinePassed}
                 onSelect={() => handleSelect(match)}
                 onChange={handleChange}
                 onSave={handleSave}
