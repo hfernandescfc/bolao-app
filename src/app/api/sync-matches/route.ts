@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { fetchGroupStageMatches, mapApiStatus } from '@/lib/football-api/client'
 import { calculateMatchPoints } from '@/lib/scoring/calculator'
 import { scoreGroupPicks } from '@/lib/scoring/recalculate'
@@ -12,7 +12,10 @@ export async function POST(request: NextRequest) {
 
   if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
 
-  const supabase = await createServiceClient()
+  // Admin client (service role, sem cookies): as escritas de points_earned
+  // precisam ignorar a RLS — como usuário (mesmo admin), o UPDATE em palpites
+  // alheios afeta 0 linhas em silêncio.
+  const supabase = createAdminClient()
   const { data: profile } = await supabase
     .from('profiles')
     .select('role')

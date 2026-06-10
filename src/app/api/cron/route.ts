@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServiceClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server'
 import { fetchTodayMatches, mapApiStatus } from '@/lib/football-api/client'
 import { calculateMatchPoints } from '@/lib/scoring/calculator'
 import { scoreGroupPicks } from '@/lib/scoring/recalculate'
@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const supabase = await createServiceClient()
+  const supabase = createAdminClient()
 
   try {
     const apiMatches = await fetchTodayMatches()
