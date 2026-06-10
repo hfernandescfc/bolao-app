@@ -1,19 +1,38 @@
-import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Profile } from '@/types'
 
+// Server actions são endpoints HTTP públicos: a proteção do layout/proxy vale
+// para a renderização, não para a action em si. Cada action revalida o chamador.
+async function requireAdmin() {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) throw new Error('Não autorizado')
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+  if (profile?.role !== 'admin') throw new Error('Sem permissão')
+}
+
 async function toggleApproval(userId: string, approve: boolean) {
   'use server'
-  const supabase = await createServiceClient()
+  await requireAdmin()
+  const supabase = createAdminClient()
   await supabase.from('profiles').update({ is_approved: approve }).eq('id', userId)
   revalidatePath('/admin/users')
 }
 
 async function setRole(userId: string, role: string) {
   'use server'
-  const supabase = await createServiceClient()
+  await requireAdmin()
+  const supabase = createAdminClient()
   await supabase.from('profiles').update({ role }).eq('id', userId)
   revalidatePath('/admin/users')
 }
