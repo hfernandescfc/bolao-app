@@ -81,7 +81,7 @@ export function MatchCard({
             {showPoints && (
               <Badge
                 className={`text-[10px] py-0 ${
-                  points === 3 ? 'bg-green-600' : points === 1 ? 'bg-yellow-500' : 'bg-gray-300 text-gray-700'
+                  points === 7 ? 'bg-green-600' : points === 3 ? 'bg-yellow-500' : 'bg-gray-300 text-gray-700'
                 }`}
               >
                 {points} pt{points !== 1 ? 's' : ''}

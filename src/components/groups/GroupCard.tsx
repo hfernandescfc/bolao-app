@@ -76,7 +76,7 @@ export function GroupCard({ group, teams, pick, isDeadlinePassed, userId, onSave
           {showPoints && (
             <Badge
               className={`text-[10px] py-0 ${
-                points === 2 ? 'bg-green-600' : points === 1 ? 'bg-yellow-500' : 'bg-gray-300 text-gray-700'
+                points === 10 ? 'bg-green-600' : points === 6 || points === 2 ? 'bg-yellow-500' : 'bg-gray-300 text-gray-700'
               }`}
             >
               {points} pt{points !== 1 ? 's' : ''}
