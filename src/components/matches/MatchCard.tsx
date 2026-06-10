@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { Match, MatchPick } from '@/types'
 import type { TeamStanding } from '@/lib/scoring/standings'
-import type { Draft, SaveState } from './MatchList'
+import type { Draft, SaveState, MatchSummary } from './MatchList'
 import { calculateMatchPoints } from '@/lib/scoring/calculator'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -23,6 +23,8 @@ interface MatchCardProps {
   warn?: boolean
   /** Após o prazo, os palpites são públicos: habilita o link "ver palpites de todos". */
   picksPublic?: boolean
+  /** Resumo pós-jogo (quantos cravaram / acertaram o resultado / erraram). */
+  summary?: MatchSummary
   onSelect: () => void
   onChange: (value: string, side: 'home' | 'away') => void
   onSave: () => void
@@ -43,7 +45,7 @@ function formatDate(dateStr: string, locale: string) {
 
 export function MatchCard({
   match, pick, editable, expanded, draft, dirty, saveState = 'idle',
-  standings, warn, picksPublic = false, onSelect, onChange, onSave, onDiscard,
+  standings, warn, picksPublic = false, summary, onSelect, onChange, onSave, onDiscard,
 }: MatchCardProps) {
   const t = useT()
   const { locale } = useLocale()
@@ -239,6 +241,9 @@ export function MatchCard({
                   {isFinished ? `${match.home_score} x ${match.away_score}` : t.matches.deadlinePassed}
                 </p>
               )}
+              {isFinished && summary && summary.total > 0 && (
+                <MatchSummaryLine summary={summary} t={t.matches} />
+              )}
               {picksPublic && (
                 <Link
                   href={`/matches/${match.id}`}
@@ -255,6 +260,31 @@ export function MatchCard({
           )}
         </div>
       )}
+    </div>
+  )
+}
+
+function MatchSummaryLine({
+  summary,
+  t,
+}: {
+  summary: MatchSummary
+  t: { summaryExact: string; summaryResult: string; summaryMiss: string }
+}) {
+  return (
+    <div className="flex items-center justify-center gap-3 text-[11px] text-gray-500">
+      <span className="inline-flex items-center gap-1">
+        <span className="w-2 h-2 rounded-full bg-green-600" />
+        {t.summaryExact}: <span className="font-semibold text-gray-700">{summary.exact}</span>
+      </span>
+      <span className="inline-flex items-center gap-1">
+        <span className="w-2 h-2 rounded-full bg-yellow-500" />
+        {t.summaryResult}: <span className="font-semibold text-gray-700">{summary.result}</span>
+      </span>
+      <span className="inline-flex items-center gap-1">
+        <span className="w-2 h-2 rounded-full bg-gray-300" />
+        {t.summaryMiss}: <span className="font-semibold text-gray-700">{summary.miss}</span>
+      </span>
     </div>
   )
 }

@@ -105,6 +105,7 @@ export const translations = {
       groupPreview: 'Como fica o grupo com seus palpites (incluindo este)',
       qualifyLegend: 'Em verde, as duas vagas de classificação.',
       ifItStays: 'Se terminar assim', seeAllPicks: 'Ver palpites de todos',
+      summaryExact: 'Placar exato', summaryResult: 'Resultado certo', summaryMiss: 'Erraram',
     },
     matchDetail: {
       back: 'Voltar às partidas',
@@ -267,6 +268,7 @@ export const translations = {
       groupPreview: 'How the group looks with your picks (including this one)',
       qualifyLegend: 'Green rows are the two qualifying spots.',
       ifItStays: 'If it stays like this', seeAllPicks: "See everyone's picks",
+      summaryExact: 'Exact score', summaryResult: 'Right outcome', summaryMiss: 'Missed',
     },
     matchDetail: {
       back: 'Back to matches',

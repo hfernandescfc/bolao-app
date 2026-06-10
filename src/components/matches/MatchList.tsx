@@ -13,11 +13,14 @@ interface MatchListProps {
   isDeadlinePassed: boolean
   userId: string
   groups: string[]
+  /** Resumo pós-jogo por match_id (quantos cravaram / acertaram / erraram). */
+  summaries?: Record<number, MatchSummary>
 }
 
 type StatusFilter = 'all' | 'pending' | 'filled'
 export type SaveState = 'idle' | 'saving' | 'saved' | 'error'
 export interface Draft { home: string; away: string }
+export interface MatchSummary { exact: number; result: number; miss: number; total: number }
 
 function parseDraft(d: Draft): { h: number; a: number } | null {
   const h = parseInt(d.home)
@@ -26,7 +29,7 @@ function parseDraft(d: Draft): { h: number; a: number } | null {
   return { h, a }
 }
 
-export function MatchList({ matches, picks: initialPicks, isDeadlinePassed, userId, groups }: MatchListProps) {
+export function MatchList({ matches, picks: initialPicks, isDeadlinePassed, userId, groups, summaries }: MatchListProps) {
   const [picks, setPicks] = useState(initialPicks)
   const [filterGroup, setFilterGroup] = useState<string>('all')
   const [filterRound, setFilterRound] = useState<number>(0)
@@ -291,6 +294,7 @@ export function MatchList({ matches, picks: initialPicks, isDeadlinePassed, user
                 standings={expanded ? selectedStandings : null}
                 warn={warnId === match.id}
                 picksPublic={isDeadlinePassed}
+                summary={summaries?.[match.id]}
                 onSelect={() => handleSelect(match)}
                 onChange={handleChange}
                 onSave={handleSave}

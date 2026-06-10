@@ -1,6 +1,8 @@
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
-import { MatchList } from '@/components/matches/MatchList'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { fetchAllRows } from '@/lib/supabase/paginate'
+import { calculateMatchPoints } from '@/lib/scoring/calculator'
+import { MatchList, type MatchSummary } from '@/components/matches/MatchList'
 import { Match, MatchPick, PICKS_DEADLINE } from '@/types'
 import { getT } from '@/lib/i18n/server'
 
@@ -31,6 +33,40 @@ export default async function MatchesPage() {
   const groups = [...new Set(matches.map((m) => m.group_id))].sort()
   const isDeadlinePassed = new Date() >= PICKS_DEADLINE
 
+  // Resumo pós-jogo: quantos cravaram / acertaram o resultado / erraram em
+  // cada partida encerrada. Soma os palpites de TODOS os participantes, então
+  // usa o service role (a RLS limitaria ao próprio usuário) e pagina (72 jogos
+  // × N participantes passa fácil de 1000 linhas).
+  let summaries: Record<number, MatchSummary> | undefined
+  const finished = matches.filter(
+    (m) => m.status === 'FINISHED' && m.home_score !== null && m.away_score !== null
+  )
+  if (isDeadlinePassed && finished.length > 0) {
+    const admin = createAdminClient()
+    const allPicks = await fetchAllRows<{ match_id: number; home_score: number; away_score: number }>(() =>
+      admin
+        .from('match_picks')
+        .select('match_id, home_score, away_score')
+        .in('match_id', finished.map((m) => m.id))
+    )
+
+    const resultByMatch = new Map(
+      finished.map((m) => [m.id, { home_score: m.home_score!, away_score: m.away_score! }])
+    )
+    summaries = {}
+    for (const m of finished) summaries[m.id] = { exact: 0, result: 0, miss: 0, total: 0 }
+    for (const p of allPicks) {
+      const real = resultByMatch.get(p.match_id)
+      const s = summaries[p.match_id]
+      if (!real || !s) continue
+      const pts = calculateMatchPoints({ home_score: p.home_score, away_score: p.away_score }, real)
+      if (pts === 7) s.exact++
+      else if (pts === 3) s.result++
+      else s.miss++
+      s.total++
+    }
+  }
+
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
@@ -53,6 +89,7 @@ export default async function MatchesPage() {
           isDeadlinePassed={isDeadlinePassed}
           userId={user.id}
           groups={groups}
+          summaries={summaries}
         />
       )}
     </div>

@@ -113,6 +113,14 @@ export default async function MatchPicksPage({
     else dist.draw++
   }
 
+  // Resumo do jogo (definitivo quando encerrado, parcial ao vivo).
+  const showSummary = (isFinished || isLive) && hasScore && rows.length > 0
+  const summary = {
+    exact: rows.filter((r) => r.pts === 7).length,
+    result: rows.filter((r) => r.pts === 3).length,
+    miss: rows.filter((r) => r.pts === 0).length,
+  }
+
   return (
     <div className="space-y-4">
       <BackLink label={td.back} />
@@ -153,6 +161,22 @@ export default async function MatchPicksPage({
               <span className="font-semibold text-sm text-gray-800 truncate">{match.away_team?.name}</span>
             </div>
           </div>
+          {showSummary && (
+            <div className="flex items-center justify-center gap-3 text-[11px] text-gray-500 mt-3 pt-3 border-t border-gray-50">
+              <span className="inline-flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-green-600" />
+                {t.matches.summaryExact}: <span className="font-semibold text-gray-700">{summary.exact}</span>
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-yellow-500" />
+                {t.matches.summaryResult}: <span className="font-semibold text-gray-700">{summary.result}</span>
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-gray-300" />
+                {t.matches.summaryMiss}: <span className="font-semibold text-gray-700">{summary.miss}</span>
+              </span>
+            </div>
+          )}
           {isLive && <p className="text-[10px] text-gray-400 text-center mt-2">{td.provisionalNote}</p>}
         </CardContent>
       </Card>
