@@ -5,10 +5,17 @@ import { calculateMatchPoints } from '@/lib/scoring/calculator'
 import { scoreGroupPicks } from '@/lib/scoring/recalculate'
 
 export async function GET(request: NextRequest) {
-  const authHeader = request.headers.get('authorization')
-  const expectedToken = `Bearer ${process.env.CRON_SECRET}`
+  const secret = process.env.CRON_SECRET
+  // Sem o secret configurado, NÃO aceite o request: do contrário a comparação
+  // viraria `Bearer undefined` e qualquer um adivinharia. Falha alto (500) para
+  // a má configuração aparecer nos logs em vez de virar buraco de segurança.
+  if (!secret) {
+    console.error('[cron] CRON_SECRET não definido no ambiente da Vercel.')
+    return NextResponse.json({ error: 'CRON_SECRET ausente no servidor' }, { status: 500 })
+  }
 
-  if (authHeader !== expectedToken) {
+  const authHeader = request.headers.get('authorization')
+  if (authHeader !== `Bearer ${secret}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

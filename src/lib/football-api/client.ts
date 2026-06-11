@@ -34,7 +34,8 @@ export interface ApiMatch {
 export async function fetchGroupStageMatches(): Promise<ApiMatch[]> {
   const res = await fetch(
     `${BASE_URL}/competitions/${WC_CODE}/matches?season=${WC_SEASON}&stage=GROUP_STAGE`,
-    { headers: getHeaders() }
+    // no-store: placar/status são dados ao vivo — nunca servir do cache do Next.
+    { headers: getHeaders(), cache: 'no-store' }
   )
   if (!res.ok) {
     throw new Error(`football-data.org error: ${res.status} ${res.statusText}`)
@@ -47,7 +48,8 @@ export async function fetchTodayMatches(): Promise<ApiMatch[]> {
   const today = new Date().toISOString().split('T')[0]
   const res = await fetch(
     `${BASE_URL}/competitions/${WC_CODE}/matches?season=${WC_SEASON}&stage=GROUP_STAGE&dateFrom=${today}&dateTo=${today}`,
-    { headers: getHeaders() }
+    // no-store: placar/status são dados ao vivo — nunca servir do cache do Next.
+    { headers: getHeaders(), cache: 'no-store' }
   )
   if (!res.ok) {
     throw new Error(`football-data.org error: ${res.status} ${res.statusText}`)
