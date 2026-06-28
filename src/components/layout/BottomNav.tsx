@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { BarChart3, CalendarDays, Trophy, User } from 'lucide-react'
+import { BarChart3, CalendarDays, Crown, Trophy, User } from 'lucide-react'
 import { useT } from '@/lib/i18n/context'
 
 export function BottomNav({ isAdmin }: { isAdmin: boolean }) {
@@ -14,6 +14,7 @@ export function BottomNav({ isAdmin }: { isAdmin: boolean }) {
   const navItems = [
     { href: '/dashboard', label: t.nav.ranking, icon: BarChart3 },
     { href: '/matches', label: t.nav.matches, icon: CalendarDays },
+    { href: '/campeao', label: t.nav.champion, icon: Crown },
     { href: '/my-picks', label: t.nav.mine, icon: User },
   ]
 

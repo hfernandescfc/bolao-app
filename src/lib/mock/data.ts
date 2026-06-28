@@ -186,11 +186,11 @@ const mockProfiles: Profile[] = [
 ]
 
 export const MOCK_LEADERBOARD: LeaderboardEntry[] = [
-  { user_id: 'u2', match_points: 18, group_points: 6, total_points: 24, exact_score_count: 4, correct_result_count: 6, last_updated: '', profile: mockProfiles[1] },
-  { user_id: 'u1', match_points: 15, group_points: 8, total_points: 23, exact_score_count: 3, correct_result_count: 6, last_updated: '', profile: mockProfiles[0] },
-  { user_id: 'u3', match_points: 12, group_points: 6, total_points: 18, exact_score_count: 2, correct_result_count: 6, last_updated: '', profile: mockProfiles[2] },
-  { user_id: 'u4', match_points:  9, group_points: 4, total_points: 13, exact_score_count: 1, correct_result_count: 6, last_updated: '', profile: mockProfiles[3] },
-  { user_id: 'u5', match_points:  6, group_points: 2, total_points:  8, exact_score_count: 0, correct_result_count: 6, last_updated: '', profile: mockProfiles[4] },
+  { user_id: 'u2', match_points: 18, group_points: 6, champion_points: 0, total_points: 24, exact_score_count: 4, correct_result_count: 6, last_updated: '', profile: mockProfiles[1] },
+  { user_id: 'u1', match_points: 15, group_points: 8, champion_points: 0, total_points: 23, exact_score_count: 3, correct_result_count: 6, last_updated: '', profile: mockProfiles[0] },
+  { user_id: 'u3', match_points: 12, group_points: 6, champion_points: 0, total_points: 18, exact_score_count: 2, correct_result_count: 6, last_updated: '', profile: mockProfiles[2] },
+  { user_id: 'u4', match_points:  9, group_points: 4, champion_points: 0, total_points: 13, exact_score_count: 1, correct_result_count: 6, last_updated: '', profile: mockProfiles[3] },
+  { user_id: 'u5', match_points:  6, group_points: 2, champion_points: 0, total_points:  8, exact_score_count: 0, correct_result_count: 6, last_updated: '', profile: mockProfiles[4] },
 ]
 
 export const DEMO_USER_ID = 'u1'

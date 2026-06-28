@@ -1,13 +1,13 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { Users, CheckCircle2, ChevronRight, ScrollText } from 'lucide-react'
+import { Users, CheckCircle2, ChevronRight, ScrollText, Crown } from 'lucide-react'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { fetchAllRows } from '@/lib/supabase/paginate'
 import { calculateMatchPoints } from '@/lib/scoring/calculator'
 import { RankingTable } from '@/components/ranking/RankingTable'
 import { NextMatchesCard, type ResultDistribution } from '@/components/dashboard/NextMatchesCard'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { LeaderboardEntry, Match, MatchPick, isMatchLocked } from '@/types'
+import { LeaderboardEntry, Match, MatchPick, ChampionPick, isMatchLocked, isChampionLocked, CHAMPION_POINTS } from '@/types'
 import { getT, getLocale } from '@/lib/i18n/server'
 
 export default async function DashboardPage() {
@@ -28,6 +28,7 @@ export default async function DashboardPage() {
     { data: matchPicksRaw },
     { count: participantsCount },
     { count: matchesTotal },
+    { data: championPickRaw },
     { data: upcomingRaw },
     { data: liveRaw },
     t,
@@ -47,6 +48,11 @@ export default async function DashboardPage() {
     service.from('profiles').select('*', { count: 'exact', head: true }).eq('is_approved', true),
     // Apenas partidas da fase eliminatória contam para o que falta preencher.
     supabase.from('matches').select('*', { count: 'exact', head: true }).neq('round', 'GROUP'),
+    supabase
+      .from('champion_picks')
+      .select('*, team:teams(*)')
+      .eq('user_id', user.id)
+      .maybeSingle(),
     supabase
       .from('matches')
       .select('*, home_team:teams!matches_home_team_id_fkey(*), away_team:teams!matches_away_team_id_fkey(*)')
@@ -79,6 +85,9 @@ export default async function DashboardPage() {
   const matchesTot = matchesTotal ?? 0
   const pendingMatches = Math.max(0, matchesTot - matchPicksCount)
   const allFilled = matchesTot > 0 && pendingMatches === 0
+
+  const championPick = (championPickRaw ?? null) as ChampionPick | null
+  const championLocked = isChampionLocked()
 
   // Distribuição dos palpites (1/X/2) dos próximos jogos travados — partidas já
   // iniciadas ou dentro de 10 min do kickoff. Usa service role para agregar
@@ -156,6 +165,30 @@ export default async function DashboardPage() {
           </Card>
         </div>
       )}
+
+      {/* Palpite de campeão */}
+      <Link href="/campeao" className="block">
+        <Card className={`transition-colors ${championLocked ? 'hover:border-gray-300' : 'border-amber-300 bg-amber-50/50 hover:border-amber-400'}`}>
+          <CardContent className="py-3 flex items-center gap-3">
+            <div className="w-9 h-9 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
+              <Crown size={18} className="text-amber-600" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-gray-800">{t.champion.title}</p>
+              <p className="text-xs text-gray-500 truncate">
+                {championLocked
+                  ? championPick?.team
+                    ? t.champion.cardChosen.replace('{team}', championPick.team.name)
+                    : t.champion.cardClosed
+                  : championPick?.team
+                    ? t.champion.cardChosen.replace('{team}', championPick.team.name)
+                    : t.champion.cardOpen.replace('{pts}', String(CHAMPION_POINTS))}
+              </p>
+            </div>
+            <ChevronRight size={18} className="text-gray-300 shrink-0" />
+          </CardContent>
+        </Card>
+      </Link>
 
       {/* O que falta preencher */}
       <Card>

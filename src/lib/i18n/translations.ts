@@ -1,7 +1,7 @@
 export const translations = {
   pt: {
     app: { name: 'Bolão dos Bezerra COPA 2026' },
-    nav: { signOut: 'Sair', ranking: 'Ranking', matches: 'Partidas', groups: 'Grupos', table: 'Tabela', mine: 'Meus', admin: 'Admin' },
+    nav: { signOut: 'Sair', ranking: 'Ranking', matches: 'Partidas', groups: 'Grupos', table: 'Tabela', mine: 'Meus', admin: 'Admin', champion: 'Campeão' },
     auth: {
       social: {
         or: 'ou',
@@ -78,10 +78,26 @@ export const translations = {
       matchExact: '10 pontos — placar exato (acertou os dois números).',
       matchResult: '5 pontos — acertou o resultado (vitória ou empate), mesmo errando o placar. Bônus de +2 pts (total 7) se também acertar o placar de um dos times.',
       matchMiss: '0 ponto — errou o resultado.',
+      championTitle: 'Palpite de campeão',
+      championText: 'Além dos jogos, você escolhe quem será o campeão do torneio. Esse palpite vale 10 pontos e fecha no início do 2º dia das oitavas (R32) — depois disso não pode mais ser alterado. Acertou o campeão, ganha os 10 pontos.',
       rankingTitle: 'Ranking e desempate',
-      rankingText: 'A classificação começou zerada nesta fase. A pontuação geral é a soma dos pontos das partidas eliminatórias. Em caso de empate, fica à frente quem tiver mais placares exatos.',
+      rankingText: 'A classificação começou zerada nesta fase. A pontuação geral é a soma dos pontos das partidas eliminatórias mais o palpite de campeão. Em caso de empate, fica à frente quem tiver mais placares exatos.',
       noteTitle: 'Observações',
       noteText: 'A fase de grupos foi encerrada e não conta mais para a pontuação. Demais detalhes (inscrição, premiação e organização) são definidos pela organização do bolão.',
+    },
+    champion: {
+      back: 'Voltar ao início',
+      title: 'Palpite de Campeão',
+      subtitle: 'Escolha quem vai levantar a taça. Vale {pts} pontos no ranking.',
+      deadline: 'Você pode escolher ou alterar até {when} (horário de Brasília).',
+      empty: 'Os times da fase eliminatória aparecerão aqui em breve.',
+      save: 'Salvar campeão', saving: 'Salvando...', saved: 'Campeão salvo!', saveError: 'Erro ao salvar. Tente de novo.',
+      closed: 'Os palpites de campeão estão encerrados.',
+      yourPick: 'Seu campeão', noPick: 'Você não escolheu um campeão.',
+      distribution: 'Palpites de todos',
+      cardOpen: 'Escolha o campeão do torneio · {pts} pts',
+      cardChosen: 'Seu campeão: {team}',
+      cardClosed: 'Palpites de campeão encerrados',
     },
     matches: {
       title: 'Palpites — Partidas', deadlinePassed: 'Prazo encerrado',
@@ -132,6 +148,7 @@ export const translations = {
     myPicks: {
       title: 'Meus Palpites', total: 'Total', matches: 'Partidas', groups: 'Grupos',
       matchSection: 'Palpites de Partidas', groupSection: 'Palpites de Grupos',
+      championSection: 'Palpite de Campeão', noChampion: 'Nenhum campeão escolhido.',
       noPicks: 'Nenhum palpite ainda.', group: 'Grupo',
     },
     participantPicks: {
@@ -169,7 +186,7 @@ export const translations = {
   },
   en: {
     app: { name: 'Bezerra 2026 World Cup Pool' },
-    nav: { signOut: 'Sign out', ranking: 'Ranking', matches: 'Matches', groups: 'Groups', table: 'Table', mine: 'Mine', admin: 'Admin' },
+    nav: { signOut: 'Sign out', ranking: 'Ranking', matches: 'Matches', groups: 'Groups', table: 'Table', mine: 'Mine', admin: 'Admin', champion: 'Champion' },
     auth: {
       social: {
         or: 'or',
@@ -246,10 +263,26 @@ export const translations = {
       matchExact: '10 points — exact score (both numbers right).',
       matchResult: '5 points — right outcome (win or draw), even if the score is wrong. Bonus +2 pts (7 total) if you also get one team\'s score right.',
       matchMiss: '0 points — wrong outcome.',
+      championTitle: 'Champion pick',
+      championText: 'Besides the matches, you pick who will win the tournament. This pick is worth 10 points and closes at the start of the 2nd day of the Round of 32 — after that it can no longer be changed. Get the champion right and you earn the 10 points.',
       rankingTitle: 'Ranking and tiebreaker',
-      rankingText: 'Standings were reset to zero for this stage. The overall score is the sum of knockout match points. In a tie, whoever has more exact scores ranks higher.',
+      rankingText: 'Standings were reset to zero for this stage. The overall score is the sum of knockout match points plus the champion pick. In a tie, whoever has more exact scores ranks higher.',
       noteTitle: 'Notes',
       noteText: 'The group stage has ended and no longer counts toward scoring. Other details (registration, prizes and organization) are defined by the pool organizers.',
+    },
+    champion: {
+      back: 'Back to home',
+      title: 'Champion Pick',
+      subtitle: 'Pick who will lift the trophy. Worth {pts} points in the ranking.',
+      deadline: 'You can choose or change it until {when} (Brasília time).',
+      empty: 'The knockout-stage teams will appear here soon.',
+      save: 'Save champion', saving: 'Saving...', saved: 'Champion saved!', saveError: 'Error saving. Try again.',
+      closed: 'Champion picks are closed.',
+      yourPick: 'Your champion', noPick: 'You did not pick a champion.',
+      distribution: 'Everyone\'s picks',
+      cardOpen: 'Pick the tournament champion · {pts} pts',
+      cardChosen: 'Your champion: {team}',
+      cardClosed: 'Champion picks closed',
     },
     matches: {
       title: 'Picks — Matches', deadlinePassed: 'Deadline passed',
@@ -300,6 +333,7 @@ export const translations = {
     myPicks: {
       title: 'My Picks', total: 'Total', matches: 'Matches', groups: 'Groups',
       matchSection: 'Match Picks', groupSection: 'Group Picks',
+      championSection: 'Champion Pick', noChampion: 'No champion picked.',
       noPicks: 'No picks yet.', group: 'Group',
     },
     participantPicks: {

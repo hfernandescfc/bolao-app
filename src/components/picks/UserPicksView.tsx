@@ -1,7 +1,8 @@
+import { Crown } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Flag } from '@/components/ui/flag'
-import type { Match, MatchPick, GroupPick, Team } from '@/types'
+import type { Match, MatchPick, GroupPick, Team, ChampionPick } from '@/types'
 import type { Translations } from '@/lib/i18n/translations'
 
 function PointsBadge({ points }: { points: number | null | undefined }) {
@@ -17,26 +18,30 @@ interface UserPicksViewProps {
   groupPicks: GroupPick[]
   matchMap: Record<number, Match>
   teamMap: Record<number, Team>
+  /** Palpite de campeão (com time). Ausente = não exibe a seção. */
+  championPick?: ChampionPick | null
   t: Translations['myPicks']
 }
 
 /**
- * Apresentação dos palpites de um participante (partidas + grupos), com os
- * pontos somados no topo. Componente puro de exibição — recebe os dados já
- * resolvidos, então serve tanto para "Meus Palpites" quanto para a tela de
+ * Apresentação dos palpites de um participante (partidas + grupos + campeão),
+ * com os pontos somados no topo. Componente puro de exibição — recebe os dados
+ * já resolvidos, então serve tanto para "Meus Palpites" quanto para a tela de
  * palpites de outro participante.
  */
-export function UserPicksView({ matchPicks, groupPicks, matchMap, teamMap, t }: UserPicksViewProps) {
+export function UserPicksView({ matchPicks, groupPicks, matchMap, teamMap, championPick, t }: UserPicksViewProps) {
   const matchPts = matchPicks.reduce((s, p) => s + (p.points_earned ?? 0), 0)
   const groupPts = groupPicks.reduce((s, p) => s + (p.points_earned ?? 0), 0)
+  const champPts = championPick?.points_earned ?? 0
   const showGroups = groupPicks.length > 0
+  const showChampion = championPick !== undefined && championPick !== null
 
   return (
     <div className="space-y-4">
       <div className={`grid gap-3 ${showGroups ? 'grid-cols-3' : 'grid-cols-2'}`}>
         <Card className="text-center">
           <CardContent className="pt-4 pb-3">
-            <p className="text-2xl font-bold text-green-700">{matchPts + groupPts}</p>
+            <p className="text-2xl font-bold text-green-700">{matchPts + groupPts + champPts}</p>
             <p className="text-xs text-gray-500">{t.total}</p>
           </CardContent>
         </Card>
@@ -55,6 +60,29 @@ export function UserPicksView({ matchPicks, groupPicks, matchMap, teamMap, t }: 
           </Card>
         )}
       </div>
+
+      {showChampion && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-1.5">
+              <Crown size={15} className="text-amber-500" /> {t.championSection}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {championPick!.team ? (
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-700 inline-flex items-center gap-2">
+                  <Flag code={championPick!.team.code} size={20} />
+                  {championPick!.team.name}
+                </span>
+                <PointsBadge points={championPick!.points_earned} />
+              </div>
+            ) : (
+              <p className="text-sm text-gray-400">{t.noChampion}</p>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader className="pb-2">

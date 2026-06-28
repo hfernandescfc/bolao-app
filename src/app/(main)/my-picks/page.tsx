@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { UserPicksView } from '@/components/picks/UserPicksView'
-import { Match, MatchPick, GroupPick, Team } from '@/types'
+import { Match, MatchPick, GroupPick, Team, ChampionPick } from '@/types'
 import { getT } from '@/lib/i18n/server'
 
 export default async function MyPicksPage() {
@@ -15,6 +15,7 @@ export default async function MyPicksPage() {
     { data: matchPicksRaw },
     { data: matchesRaw },
     { data: teamsRaw },
+    { data: championRaw },
     t,
   ] = await Promise.all([
     // Fase eliminatória: só os palpites de partidas com round != GROUP.
@@ -28,6 +29,7 @@ export default async function MyPicksPage() {
       .neq('round', 'GROUP')
       .order('scheduled_at'),
     supabase.from('teams').select('*'),
+    supabase.from('champion_picks').select('*, team:teams(*)').eq('user_id', user.id).maybeSingle(),
     getT(),
   ])
 
@@ -35,6 +37,7 @@ export default async function MyPicksPage() {
   const groupPicks: GroupPick[] = []
   const matches = (matchesRaw ?? []) as Match[]
   const teams = (teamsRaw ?? []) as Team[]
+  const championPick = (championRaw ?? null) as ChampionPick | null
 
   const matchMap: Record<number, Match> = {}
   for (const m of matches) matchMap[m.id] = m
@@ -49,6 +52,7 @@ export default async function MyPicksPage() {
         groupPicks={groupPicks}
         matchMap={matchMap}
         teamMap={teamMap}
+        championPick={championPick}
         t={t.myPicks}
       />
     </div>

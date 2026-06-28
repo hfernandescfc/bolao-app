@@ -66,10 +66,20 @@ export interface GroupPick {
   updated_at: string
 }
 
+export interface ChampionPick {
+  user_id: string
+  team_id: number
+  points_earned: number | null
+  created_at: string
+  updated_at: string
+  team?: Team
+}
+
 export interface LeaderboardEntry {
   user_id: string
   match_points: number
   group_points: number
+  champion_points: number
   total_points: number
   exact_score_count: number
   correct_result_count: number
@@ -93,4 +103,12 @@ export function isMatchLocked(match: Pick<Match, 'status' | 'scheduled_at'>): bo
   const deadline = new Date(match.scheduled_at)
   deadline.setMinutes(deadline.getMinutes() - 10)
   return new Date() >= deadline
+}
+
+// Palpite de campeão: vale 10 pontos e fecha no início do 2º dia da R32.
+// Precisa bater com o prazo da RLS em 010_champion_pick.sql.
+export const CHAMPION_POINTS = 10
+export const CHAMPION_DEADLINE = new Date('2026-06-29T17:00:00Z')
+export function isChampionLocked(now: Date = new Date()): boolean {
+  return now >= CHAMPION_DEADLINE
 }
