@@ -13,21 +13,26 @@ export default async function MyPicksPage() {
 
   const [
     { data: matchPicksRaw },
-    { data: groupPicksRaw },
     { data: matchesRaw },
     { data: teamsRaw },
     t,
   ] = await Promise.all([
-    supabase.from('match_picks').select('*').eq('user_id', user.id).order('match_id'),
-    supabase.from('group_picks').select('*').eq('user_id', user.id).order('group_id'),
+    // Fase eliminatória: só os palpites de partidas com round != GROUP.
+    supabase
+      .from('match_picks')
+      .select('*, match:matches!inner(round)')
+      .eq('user_id', user.id)
+      .neq('match.round', 'GROUP')
+      .order('match_id'),
     supabase.from('matches').select('*, home_team:teams!matches_home_team_id_fkey(*), away_team:teams!matches_away_team_id_fkey(*)')
+      .neq('round', 'GROUP')
       .order('scheduled_at'),
     supabase.from('teams').select('*'),
     getT(),
   ])
 
   const matchPicks = (matchPicksRaw ?? []) as MatchPick[]
-  const groupPicks = (groupPicksRaw ?? []) as GroupPick[]
+  const groupPicks: GroupPick[] = []
   const matches = (matchesRaw ?? []) as Match[]
   const teams = (teamsRaw ?? []) as Team[]
 

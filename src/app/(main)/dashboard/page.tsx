@@ -26,10 +26,8 @@ export default async function DashboardPage() {
   const [
     { data: leaderboardRaw },
     { data: matchPicksRaw },
-    { count: groupPicksCount },
     { count: participantsCount },
     { count: matchesTotal },
-    { count: groupsTotal },
     { data: upcomingRaw },
     { data: liveRaw },
     t,
@@ -41,11 +39,14 @@ export default async function DashboardPage() {
       .eq('profile.is_approved', true)
       .order('total_points', { ascending: false })
       .order('exact_score_count', { ascending: false }),
-    supabase.from('match_picks').select('match_id, home_score, away_score').eq('user_id', user.id),
-    supabase.from('group_picks').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
+    supabase
+      .from('match_picks')
+      .select('match_id, home_score, away_score, match:matches!inner(round)')
+      .eq('user_id', user.id)
+      .neq('match.round', 'GROUP'),
     service.from('profiles').select('*', { count: 'exact', head: true }).eq('is_approved', true),
-    supabase.from('matches').select('*', { count: 'exact', head: true }),
-    supabase.from('groups').select('*', { count: 'exact', head: true }),
+    // Apenas partidas da fase eliminatória contam para o que falta preencher.
+    supabase.from('matches').select('*', { count: 'exact', head: true }).neq('round', 'GROUP'),
     supabase
       .from('matches')
       .select('*, home_team:teams!matches_home_team_id_fkey(*), away_team:teams!matches_away_team_id_fkey(*)')
@@ -76,8 +77,6 @@ export default async function DashboardPage() {
   const upcoming = [...liveMatches, ...((upcomingRaw ?? []) as Match[])]
 
   const matchesTot = matchesTotal ?? 0
-  const groupsTot = groupsTotal ?? 0
-  const gpCount = groupPicksCount ?? 0
   const pendingMatches = Math.max(0, matchesTot - matchPicksCount)
   const allFilled = matchesTot > 0 && pendingMatches === 0
 
@@ -172,26 +171,15 @@ export default async function DashboardPage() {
               <CheckCircle2 size={16} /> {t.dashboard.allFilled}
             </p>
           ) : (
-            <>
-              <MissingRow
-                label={t.dashboard.matchPicks}
-                filled={matchPicksCount}
-                total={matchesTot}
-                href="/matches"
-                fill={t.dashboard.fill}
-                complete={t.dashboard.complete}
-                disabled={false}
-              />
-              <MissingRow
-                label={t.dashboard.groupPicks}
-                filled={gpCount}
-                total={groupsTot}
-                href="/groups"
-                fill={t.dashboard.fill}
-                complete={t.dashboard.complete}
-                disabled={true}
-              />
-            </>
+            <MissingRow
+              label={t.dashboard.matchPicks}
+              filled={matchPicksCount}
+              total={matchesTot}
+              href="/matches"
+              fill={t.dashboard.fill}
+              complete={t.dashboard.complete}
+              disabled={false}
+            />
           )}
         </CardContent>
       </Card>

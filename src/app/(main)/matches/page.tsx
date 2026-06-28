@@ -18,6 +18,7 @@ export default async function MatchesPage() {
       supabase
         .from('matches')
         .select('*, home_team:teams!matches_home_team_id_fkey(*), away_team:teams!matches_away_team_id_fkey(*)')
+        .neq('round', 'GROUP')
         .order('scheduled_at', { ascending: true }),
       supabase.from('match_picks').select('*').eq('user_id', user.id),
     ]),

@@ -2,18 +2,18 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { BarChart3, CalendarDays, ListOrdered, Shield, Trophy, User } from 'lucide-react'
+import { BarChart3, CalendarDays, Trophy, User } from 'lucide-react'
 import { useT } from '@/lib/i18n/context'
 
 export function BottomNav({ isAdmin }: { isAdmin: boolean }) {
   const pathname = usePathname()
   const t = useT()
 
+  // Fase eliminatória: as abas de grupos (palpites e tabela) saíram da navegação
+  // porque a fase de grupos encerrou. As páginas seguem acessíveis por URL.
   const navItems = [
     { href: '/dashboard', label: t.nav.ranking, icon: BarChart3 },
     { href: '/matches', label: t.nav.matches, icon: CalendarDays },
-    { href: '/groups', label: t.nav.groups, icon: Shield },
-    { href: '/my-standings', label: t.nav.table, icon: ListOrdered },
     { href: '/my-picks', label: t.nav.mine, icon: User },
   ]
 

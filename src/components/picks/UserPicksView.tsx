@@ -6,8 +6,8 @@ import type { Translations } from '@/lib/i18n/translations'
 
 function PointsBadge({ points }: { points: number | null | undefined }) {
   if (points === null || points === undefined) return <span className="text-xs text-gray-400">—</span>
-  // Escala de pontos: partidas 0/3/7, grupos 0/2/6/10.
-  // Verde = acerto máximo (7 ou 10), amarelo = acerto parcial, cinza = zero.
+  // Escala da fase eliminatória: 10 (placar exato), 7 (resultado + um placar),
+  // 5 (resultado certo), 0 (erro). Verde = 7+, amarelo = parcial, cinza = zero.
   const color = points >= 7 ? 'bg-green-600' : points > 0 ? 'bg-yellow-500' : 'bg-gray-200 text-gray-600'
   return <Badge className={`text-[10px] py-0 ${color}`}>{points} pt{points === 1 ? '' : 's'}</Badge>
 }
@@ -29,10 +29,11 @@ interface UserPicksViewProps {
 export function UserPicksView({ matchPicks, groupPicks, matchMap, teamMap, t }: UserPicksViewProps) {
   const matchPts = matchPicks.reduce((s, p) => s + (p.points_earned ?? 0), 0)
   const groupPts = groupPicks.reduce((s, p) => s + (p.points_earned ?? 0), 0)
+  const showGroups = groupPicks.length > 0
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-3 gap-3">
+      <div className={`grid gap-3 ${showGroups ? 'grid-cols-3' : 'grid-cols-2'}`}>
         <Card className="text-center">
           <CardContent className="pt-4 pb-3">
             <p className="text-2xl font-bold text-green-700">{matchPts + groupPts}</p>
@@ -45,17 +46,19 @@ export function UserPicksView({ matchPicks, groupPicks, matchMap, teamMap, t }: 
             <p className="text-xs text-gray-500">{t.matches}</p>
           </CardContent>
         </Card>
-        <Card className="text-center">
-          <CardContent className="pt-4 pb-3">
-            <p className="text-2xl font-bold text-gray-800">{groupPts}</p>
-            <p className="text-xs text-gray-500">{t.groups}</p>
-          </CardContent>
-        </Card>
+        {showGroups && (
+          <Card className="text-center">
+            <CardContent className="pt-4 pb-3">
+              <p className="text-2xl font-bold text-gray-800">{groupPts}</p>
+              <p className="text-xs text-gray-500">{t.groups}</p>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm">{t.matchSection} ({matchPicks.length}/72)</CardTitle>
+          <CardTitle className="text-sm">{t.matchSection} ({matchPicks.length})</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           <div className="divide-y divide-gray-50 max-h-96 overflow-y-auto">
@@ -85,15 +88,13 @@ export function UserPicksView({ matchPicks, groupPicks, matchMap, teamMap, t }: 
         </CardContent>
       </Card>
 
+      {showGroups && (
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm">{t.groupSection} ({groupPicks.length}/12)</CardTitle>
+          <CardTitle className="text-sm">{t.groupSection} ({groupPicks.length})</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           <div className="divide-y divide-gray-50">
-            {groupPicks.length === 0 && (
-              <p className="text-center text-gray-400 text-sm py-6">{t.noPicks}</p>
-            )}
             {groupPicks.map((p) => {
               const t1 = teamMap[p.first_place]
               const t2 = teamMap[p.second_place]
@@ -114,6 +115,7 @@ export function UserPicksView({ matchPicks, groupPicks, matchMap, teamMap, t }: 
           </div>
         </CardContent>
       </Card>
+      )}
     </div>
   )
 }
