@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { Flag } from '@/components/ui/flag'
 import { calculateMatchPoints } from '@/lib/scoring/calculator'
 import type { Match, MatchPick } from '@/types'
+import { isMatchLocked } from '@/types'
 import type { Translations } from '@/lib/i18n/translations'
 
 /** Distribuição dos palpites de um confronto por resultado (1 / X / 2). */
@@ -19,9 +20,8 @@ interface NextMatchesCardProps {
   matches: Match[]
   pickByMatchId: Record<number, MatchPick>
   locale: string
-  isDeadlinePassed: boolean
   t: Translations['dashboard']
-  /** Por match_id; presente só após o início da Copa. */
+  /** Por match_id; presente apenas para partidas já travadas. */
   distribution?: Record<number, ResultDistribution>
 }
 
@@ -32,7 +32,7 @@ function formatDate(dateStr: string, locale: string) {
   })
 }
 
-export function NextMatchesCard({ matches, pickByMatchId, locale, isDeadlinePassed, t, distribution }: NextMatchesCardProps) {
+export function NextMatchesCard({ matches, pickByMatchId, locale, t, distribution }: NextMatchesCardProps) {
   return (
     <Card>
       <CardHeader className="pb-2">
@@ -44,6 +44,7 @@ export function NextMatchesCard({ matches, pickByMatchId, locale, isDeadlinePass
         ) : (
           matches.map((m) => {
             const pick = pickByMatchId[m.id]
+            const isLocked = isMatchLocked(m)
             const isLive = m.status === 'LIVE' || m.status === 'PAUSED'
             const hasLiveScore = isLive && m.home_score !== null && m.away_score !== null
             const livePoints =
@@ -95,7 +96,7 @@ export function NextMatchesCard({ matches, pickByMatchId, locale, isDeadlinePass
                         </span>
                       )}
                     </span>
-                  ) : isDeadlinePassed ? (
+                  ) : isLocked ? (
                     <span className="text-[11px] text-gray-400">{t.noPick}</span>
                   ) : (
                     <Link href="/matches" className="text-[11px] font-medium text-amber-600 inline-flex items-center gap-0.5 hover:underline">
@@ -103,7 +104,7 @@ export function NextMatchesCard({ matches, pickByMatchId, locale, isDeadlinePass
                     </Link>
                   )}
                 </div>
-                {isDeadlinePassed && (
+                {isLocked && (
                   <div className="mt-1.5 text-right">
                     <Link
                       href={`/matches/${m.id}`}

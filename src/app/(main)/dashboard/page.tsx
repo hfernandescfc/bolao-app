@@ -7,7 +7,7 @@ import { calculateMatchPoints } from '@/lib/scoring/calculator'
 import { RankingTable } from '@/components/ranking/RankingTable'
 import { NextMatchesCard, type ResultDistribution } from '@/components/dashboard/NextMatchesCard'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { LeaderboardEntry, Match, MatchPick, PICKS_DEADLINE } from '@/types'
+import { LeaderboardEntry, Match, MatchPick, isMatchLocked } from '@/types'
 import { getT, getLocale } from '@/lib/i18n/server'
 
 export default async function DashboardPage() {
@@ -79,26 +79,25 @@ export default async function DashboardPage() {
   const groupsTot = groupsTotal ?? 0
   const gpCount = groupPicksCount ?? 0
   const pendingMatches = Math.max(0, matchesTot - matchPicksCount)
-  const pendingGroups = Math.max(0, groupsTot - gpCount)
-  const isDeadlinePassed = new Date() >= PICKS_DEADLINE
-  const allFilled = matchesTot > 0 && pendingMatches === 0 && pendingGroups === 0
+  const allFilled = matchesTot > 0 && pendingMatches === 0
 
-  // Distribuição dos palpites (1/X/2) dos próximos jogos — só após o início da
-  // Copa, quando os palpites já estão travados. Usa o service role para somar
+  // Distribuição dos palpites (1/X/2) dos próximos jogos travados — partidas já
+  // iniciadas ou dentro de 10 min do kickoff. Usa service role para agregar
   // os palpites de todos os participantes (a RLS limitaria ao próprio usuário).
+  const lockedUpcomingIds = upcoming.filter((m) => isMatchLocked(m)).map((m) => m.id)
   let distribution: Record<number, ResultDistribution> | undefined
-  if (isDeadlinePassed && upcoming.length > 0) {
+  if (lockedUpcomingIds.length > 0) {
     // Paginado: a soma cobre todos os participantes (5 jogos × N pode passar de
     // 1000 linhas e seria truncada em silêncio sem paginar).
     const allPicks = await fetchAllRows<{ match_id: number; home_score: number; away_score: number }>(() =>
       service
         .from('match_picks')
         .select('match_id, home_score, away_score')
-        .in('match_id', upcoming.map((m) => m.id))
+        .in('match_id', lockedUpcomingIds)
     )
 
     distribution = {}
-    for (const m of upcoming) distribution[m.id] = { home: 0, draw: 0, away: 0, total: 0 }
+    for (const id of lockedUpcomingIds) distribution[id] = { home: 0, draw: 0, away: 0, total: 0 }
     for (const p of allPicks ?? []) {
       const d = distribution[p.match_id]
       if (!d) continue
@@ -163,8 +162,8 @@ export default async function DashboardPage() {
       <Card>
         <CardHeader className="pb-2 flex-row items-center justify-between space-y-0">
           <CardTitle className="text-sm text-gray-600">{t.dashboard.whatsMissing}</CardTitle>
-          <span className={`text-[10px] px-2 py-0.5 rounded-full ${isDeadlinePassed ? 'bg-red-50 text-red-600' : 'bg-gray-100 text-gray-500'}`}>
-            {isDeadlinePassed ? t.dashboard.deadlinePassed : t.dashboard.deadlineNote}
+          <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">
+            {t.dashboard.deadlineNote}
           </span>
         </CardHeader>
         <CardContent className="space-y-2">
@@ -181,7 +180,7 @@ export default async function DashboardPage() {
                 href="/matches"
                 fill={t.dashboard.fill}
                 complete={t.dashboard.complete}
-                disabled={isDeadlinePassed}
+                disabled={false}
               />
               <MissingRow
                 label={t.dashboard.groupPicks}
@@ -190,7 +189,7 @@ export default async function DashboardPage() {
                 href="/groups"
                 fill={t.dashboard.fill}
                 complete={t.dashboard.complete}
-                disabled={isDeadlinePassed}
+                disabled={true}
               />
             </>
           )}
@@ -215,7 +214,6 @@ export default async function DashboardPage() {
         matches={upcoming}
         pickByMatchId={pickByMatchId}
         locale={locale}
-        isDeadlinePassed={isDeadlinePassed}
         t={t.dashboard}
         distribution={distribution}
       />
@@ -239,7 +237,7 @@ export default async function DashboardPage() {
       {/* Ranking geral */}
       <div className="pt-1">
         <h2 className="text-sm font-semibold text-gray-600 mb-2">{t.dashboard.fullRanking}</h2>
-        <RankingTable entries={leaderboard} currentUserId={user.id} t={t.ranking} picksVisible={isDeadlinePassed} liveDelta={liveDelta} />
+        <RankingTable entries={leaderboard} currentUserId={user.id} t={t.ranking} picksVisible={true} liveDelta={liveDelta} />
         {leaderboard.length === 0 && (
           <p className="text-center text-gray-400 text-sm pt-4">{t.dashboard.empty}</p>
         )}
