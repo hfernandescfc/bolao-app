@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ArrowLeft, CalendarClock, Target, Shield, Trophy, Info } from 'lucide-react'
+import { ArrowLeft, CalendarClock, Target, Trophy, Info } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { getT } from '@/lib/i18n/server'
 
@@ -27,15 +27,6 @@ export default async function RulesPage() {
           <Bullet color="bg-green-600">{r.matchExact}</Bullet>
           <Bullet color="bg-yellow-500">{r.matchResult}</Bullet>
           <Bullet color="bg-gray-300">{r.matchMiss}</Bullet>
-        </ul>
-      </RuleCard>
-
-      <RuleCard icon={Shield} title={r.groupTitle}>
-        <p className="mb-2">{r.groupText}</p>
-        <ul className="space-y-1">
-          <Bullet color="bg-green-600">{r.groupOrder}</Bullet>
-          <Bullet color="bg-yellow-500">{r.groupSwapped}</Bullet>
-          <Bullet color="bg-gray-300">{r.groupOne}</Bullet>
         </ul>
       </RuleCard>
 
