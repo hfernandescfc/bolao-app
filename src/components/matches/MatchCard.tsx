@@ -86,7 +86,9 @@ export function MatchCard({
       >
         <div className="flex items-center justify-between mb-3">
           <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
-            {t.matches.group} {match.group_id} · {t.matches.round} {match.matchday}
+            {match.round === 'GROUP'
+              ? `${t.matches.group} ${match.group_id} · ${t.matches.round} ${match.matchday}`
+              : (t.matches.roundLabels as Record<string, string>)[match.round] ?? match.round}
           </span>
           <div className="flex items-center gap-2">
             {isLive && <Badge variant="destructive" className="text-[10px] py-0 animate-pulse">{t.matches.live}</Badge>}
@@ -100,9 +102,9 @@ export function MatchCard({
                 variant="outline"
                 title={t.matches.ifItStays}
                 className={`text-[10px] py-0 ${
-                  livePoints === 7
+                  livePoints === 10
                     ? 'border-green-600 text-green-700'
-                    : livePoints === 3
+                    : livePoints >= 5
                       ? 'border-yellow-500 text-yellow-600'
                       : 'border-gray-300 text-gray-400'
                 }`}
@@ -118,7 +120,7 @@ export function MatchCard({
             {showPoints && (
               <Badge
                 className={`text-[10px] py-0 ${
-                  points === 7 ? 'bg-green-600' : points === 3 ? 'bg-yellow-500' : 'bg-gray-300 text-gray-700'
+                  points === 10 ? 'bg-green-600' : points! >= 5 ? 'bg-yellow-500' : 'bg-gray-300 text-gray-700'
                 }`}
               >
                 {points} pt{points !== 1 ? 's' : ''}

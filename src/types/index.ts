@@ -2,6 +2,8 @@ export type UserRole = 'participant' | 'admin'
 
 export type MatchStatus = 'SCHEDULED' | 'LIVE' | 'PAUSED' | 'FINISHED' | 'POSTPONED'
 
+export type Round = 'GROUP' | 'R32' | 'R16' | 'QF' | 'SF' | '3RD' | 'FINAL'
+
 export interface Profile {
   id: string
   display_name: string
@@ -27,8 +29,9 @@ export interface Team {
 export interface Match {
   id: number
   external_id: number | null
-  group_id: string
-  matchday: number
+  round: Round
+  group_id: string | null
+  matchday: number | null
   home_team_id: number
   away_team_id: number
   scheduled_at: string
@@ -81,4 +84,13 @@ export interface SyncLog {
   triggered_by: 'cron' | 'admin'
 }
 
+// Mantido por compatibilidade com páginas que ainda referenciam (prazo já expirado)
 export const PICKS_DEADLINE = new Date('2026-06-11T16:00:00Z')
+
+// Prazo por partida: bloqueado 10 minutos antes do início
+export function isMatchLocked(match: Pick<Match, 'status' | 'scheduled_at'>): boolean {
+  if (match.status !== 'SCHEDULED') return true
+  const deadline = new Date(match.scheduled_at)
+  deadline.setMinutes(deadline.getMinutes() - 10)
+  return new Date() >= deadline
+}

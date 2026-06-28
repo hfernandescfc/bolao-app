@@ -4,12 +4,10 @@ import { calculateGroupStandings, type MatchResult } from './standings'
 import type { Team, Match, GroupPick } from '@/types'
 
 /**
- * Recalcula os pontos de TODOS os palpites de partidas já finalizadas.
+ * Recalcula os pontos de todos os palpites de partidas ELIMINATÓRIAS já finalizadas.
  *
- * É idempotente: só grava quando o valor muda, então pode rodar quantas
- * vezes for preciso. Diferente do cálculo "na transição" feito pelo cron,
- * esta função também corrige palpites cujo placar foi ajustado depois de
- * o jogo já constar como FINISHED.
+ * Filtra apenas matches com round != 'GROUP' para não re-scorar a fase de grupos
+ * com a nova fórmula de pontuação. É idempotente.
  *
  * @returns quantidade de palpites efetivamente atualizados
  */
@@ -18,6 +16,7 @@ export async function scoreMatchPicks(supabase: SupabaseClient): Promise<number>
     .from('matches')
     .select('id, home_score, away_score')
     .eq('status', 'FINISHED')
+    .neq('round', 'GROUP')
     .not('home_score', 'is', null)
     .not('away_score', 'is', null)
 
@@ -43,21 +42,14 @@ export async function scoreMatchPicks(supabase: SupabaseClient): Promise<number>
 
 /**
  * Recalcula os pontos dos palpites de classificados (1º e 2º do grupo).
- *
- * Só pontua grupos cujas 6 partidas estejam todas FINISHED, pois antes
- * disso a classificação ainda pode mudar. Reaproveita exatamente o mesmo
- * critério de desempate FIFA usado na tela de classificação
- * (`calculateGroupStandings`), garantindo consistência entre o que o
- * usuário vê e o que é pontuado.
- *
- * É idempotente: só grava quando o valor muda.
+ * Mantido para eventual necessidade histórica; não é chamado na fase eliminatória.
  *
  * @returns quantidade de palpites de grupo efetivamente atualizados
  */
 export async function scoreGroupPicks(supabase: SupabaseClient): Promise<number> {
   const [{ data: teamsRaw }, { data: matchesRaw }, { data: groupPicksRaw }] = await Promise.all([
     supabase.from('teams').select('*'),
-    supabase.from('matches').select('*'),
+    supabase.from('matches').select('*').eq('round', 'GROUP'),
     supabase.from('group_picks').select('*'),
   ])
 
@@ -72,7 +64,6 @@ export async function scoreGroupPicks(supabase: SupabaseClient): Promise<number>
     teamsByGroup.set(t.group_id, arr)
   }
 
-  // Determina o 1º e 2º reais de cada grupo já totalmente finalizado.
   const realRankByGroup = new Map<string, { first: number; second: number }>()
   for (const [groupId, groupTeams] of teamsByGroup) {
     const groupMatches = matches.filter((m) => m.group_id === groupId)
@@ -102,7 +93,7 @@ export async function scoreGroupPicks(supabase: SupabaseClient): Promise<number>
   let updated = 0
   for (const gp of groupPicks) {
     const real = realRankByGroup.get(gp.group_id)
-    if (!real) continue // grupo ainda não encerrado
+    if (!real) continue
 
     const pts = calculateGroupPoints(
       { first_place: gp.first_place, second_place: gp.second_place },

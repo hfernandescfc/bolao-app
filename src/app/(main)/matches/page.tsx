@@ -3,7 +3,7 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { fetchAllRows } from '@/lib/supabase/paginate'
 import { calculateMatchPoints } from '@/lib/scoring/calculator'
 import { MatchList, type MatchSummary } from '@/components/matches/MatchList'
-import { Match, MatchPick, PICKS_DEADLINE } from '@/types'
+import { Match, MatchPick } from '@/types'
 import { getT } from '@/lib/i18n/server'
 
 export default async function MatchesPage() {
@@ -30,18 +30,12 @@ export default async function MatchesPage() {
     picks[p.match_id] = p as MatchPick
   }
 
-  const groups = [...new Set(matches.map((m) => m.group_id))].sort()
-  const isDeadlinePassed = new Date() >= PICKS_DEADLINE
-
-  // Resumo pós-jogo: quantos cravaram / acertaram o resultado / erraram em
-  // cada partida encerrada. Soma os palpites de TODOS os participantes, então
-  // usa o service role (a RLS limitaria ao próprio usuário) e pagina (72 jogos
-  // × N participantes passa fácil de 1000 linhas).
+  // Resumo pós-jogo para partidas encerradas: usa admin client (RLS impediria ver todos)
   let summaries: Record<number, MatchSummary> | undefined
   const finished = matches.filter(
     (m) => m.status === 'FINISHED' && m.home_score !== null && m.away_score !== null
   )
-  if (isDeadlinePassed && finished.length > 0) {
+  if (finished.length > 0) {
     const admin = createAdminClient()
     const allPicks = await fetchAllRows<{ match_id: number; home_score: number; away_score: number }>(() =>
       admin
@@ -60,8 +54,8 @@ export default async function MatchesPage() {
       const s = summaries[p.match_id]
       if (!real || !s) continue
       const pts = calculateMatchPoints({ home_score: p.home_score, away_score: p.away_score }, real)
-      if (pts === 7) s.exact++
-      else if (pts === 3) s.result++
+      if (pts === 10) s.exact++
+      else if (pts >= 5) s.result++
       else s.miss++
       s.total++
     }
@@ -71,24 +65,15 @@ export default async function MatchesPage() {
     <div>
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-xl font-bold text-gray-900">{t.matches.title}</h1>
-        {isDeadlinePassed && (
-          <span className="text-xs text-red-600 bg-red-50 px-2 py-1 rounded-full">
-            {t.matches.deadlinePassed}
-          </span>
-        )}
       </div>
-      {!isDeadlinePassed && (
-        <p className="text-xs text-gray-500 mb-4">{t.matches.deadline}</p>
-      )}
+      <p className="text-xs text-gray-500 mb-4">{t.matches.deadline}</p>
       {matches.length === 0 ? (
         <p className="text-center text-gray-400 py-12">{t.matches.empty}</p>
       ) : (
         <MatchList
           matches={matches}
           picks={picks}
-          isDeadlinePassed={isDeadlinePassed}
           userId={user.id}
-          groups={groups}
           summaries={summaries}
         />
       )}

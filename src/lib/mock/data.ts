@@ -82,7 +82,7 @@ function makeMatch(
   const home = MOCK_TEAMS.find(t => t.id === homeId)!
   const away = MOCK_TEAMS.find(t => t.id === awayId)!
   return {
-    id, external_id: id, group_id: groupId, matchday,
+    id, external_id: id, round: 'GROUP' as const, group_id: groupId, matchday,
     home_team_id: homeId, away_team_id: awayId,
     scheduled_at: date, status: status as Match['status'],
     home_score: homeScore, away_score: awayScore,

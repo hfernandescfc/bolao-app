@@ -8,13 +8,26 @@ interface GroupClassification {
   second_place: number
 }
 
+// Pontuação fase eliminatória:
+//   10 pts — placar exato
+//    7 pts — resultado certo + placar de um time acertado (somente em não-empates)
+//    5 pts — resultado certo (vit/emp/der)
+//    0 pts — resultado errado
 export function calculateMatchPoints(pick: Score, result: Score): number {
-  if (pick.home_score === result.home_score && pick.away_score === result.away_score) {
-    return 7
-  }
+  const exactHome = pick.home_score === result.home_score
+  const exactAway = pick.away_score === result.away_score
+
+  if (exactHome && exactAway) return 10
+
   const pickOutcome = Math.sign(pick.home_score - pick.away_score)
   const realOutcome = Math.sign(result.home_score - result.away_score)
-  return pickOutcome === realOutcome ? 3 : 0
+
+  if (pickOutcome !== realOutcome) return 0
+
+  // Bônus de 2 pts: acertou o placar de um dos times (só em jogos com vencedor)
+  if (realOutcome !== 0 && (exactHome || exactAway)) return 7
+
+  return 5
 }
 
 export function calculateGroupPoints(

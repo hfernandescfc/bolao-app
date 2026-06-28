@@ -128,7 +128,7 @@ export function DemoMatchList({ matches }: { matches: Match[] }) {
     if (stored) setPicks(JSON.parse(stored))
   }, [])
 
-  const groups = [...new Set(matches.map((m) => m.group_id))].sort()
+  const groups = [...new Set(matches.filter((m) => m.group_id).map((m) => m.group_id!))].sort()
 
   const filledCount = matches.filter((m) => picks[m.id]).length
   const pendingCount = matches.length - filledCount

@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Match, MatchPick, Team } from '@/types'
+import { Match, MatchPick, Team, Round, isMatchLocked } from '@/types'
 import { MatchCard } from './MatchCard'
 import { calculateGroupStandings, type MatchResult, type TeamStanding } from '@/lib/scoring/standings'
 import { useT } from '@/lib/i18n/context'
@@ -10,9 +10,7 @@ import { useT } from '@/lib/i18n/context'
 interface MatchListProps {
   matches: Match[]
   picks: Record<number, MatchPick>
-  isDeadlinePassed: boolean
   userId: string
-  groups: string[]
   /** Resumo pós-jogo por match_id (quantos cravaram / acertaram / erraram). */
   summaries?: Record<number, MatchSummary>
 }
@@ -29,14 +27,11 @@ function parseDraft(d: Draft): { h: number; a: number } | null {
   return { h, a }
 }
 
-export function MatchList({ matches, picks: initialPicks, isDeadlinePassed, userId, groups, summaries }: MatchListProps) {
+export function MatchList({ matches, picks: initialPicks, userId, summaries }: MatchListProps) {
   const [picks, setPicks] = useState(initialPicks)
-  const [filterGroup, setFilterGroup] = useState<string>('all')
-  const [filterRound, setFilterRound] = useState<number>(0)
+  const [filterRound, setFilterRound] = useState<Round | 'all'>('all')
   const [filterStatus, setFilterStatus] = useState<StatusFilter>('all')
 
-  // Só um confronto fica aberto por vez. Enquanto houver alteração não salva
-  // (`dirty`), não é possível abrir/editar outro — força a confirmação do save.
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [draft, setDraft] = useState<Draft>({ home: '', away: '' })
   const [dirty, setDirty] = useState(false)
@@ -47,14 +42,20 @@ export function MatchList({ matches, picks: initialPicks, isDeadlinePassed, user
   const t = useT()
 
   function isEditable(m: Match) {
-    return !isDeadlinePassed && m.status !== 'FINISHED'
+    return !isMatchLocked(m)
   }
 
-  // Times e jogos por grupo, derivados dos próprios confrontos (cada grupo de 4
-  // times aparece por completo nos 6 jogos). Evita uma query extra de teams.
+  // Rounds disponíveis nos dados (na ordem lógica do torneio)
+  const ROUND_ORDER: Round[] = ['GROUP', 'R32', 'R16', 'QF', 'SF', '3RD', 'FINAL']
+  const availableRounds = useMemo(() => {
+    const set = new Set(matches.map((m) => m.round))
+    return ROUND_ORDER.filter((r) => set.has(r))
+  }, [matches])
+
   const teamsByGroup = useMemo(() => {
     const map: Record<string, Map<number, Team>> = {}
     for (const m of matches) {
+      if (!m.group_id) continue
       const g = (map[m.group_id] ??= new Map())
       if (m.home_team) g.set(m.home_team.id, m.home_team)
       if (m.away_team) g.set(m.away_team.id, m.away_team)
@@ -64,7 +65,10 @@ export function MatchList({ matches, picks: initialPicks, isDeadlinePassed, user
 
   const matchesByGroup = useMemo(() => {
     const map: Record<string, Match[]> = {}
-    for (const m of matches) (map[m.group_id] ??= []).push(m)
+    for (const m of matches) {
+      if (!m.group_id) continue
+      ;(map[m.group_id] ??= []).push(m)
+    }
     return map
   }, [matches])
 
@@ -72,19 +76,16 @@ export function MatchList({ matches, picks: initialPicks, isDeadlinePassed, user
   const pendingCount = matches.length - filledCount
 
   const filtered = matches.filter((m) => {
-    if (filterGroup !== 'all' && m.group_id !== filterGroup) return false
-    if (filterRound !== 0 && m.matchday !== filterRound) return false
+    if (filterRound !== 'all' && m.round !== filterRound) return false
     if (filterStatus === 'filled' && !picks[m.id]) return false
     if (filterStatus === 'pending' && picks[m.id]) return false
     return true
   })
 
-  // Classificação projetada do grupo do confronto selecionado, considerando
-  // jogos encerrados (placar real), palpites já salvos e o rascunho atual.
   const selectedStandings = useMemo<TeamStanding[] | null>(() => {
     if (selectedId == null) return null
     const match = matches.find((m) => m.id === selectedId)
-    if (!match) return null
+    if (!match || !match.group_id) return null
     const groupMatches = matchesByGroup[match.group_id] ?? []
     const teams = [...(teamsByGroup[match.group_id]?.values() ?? [])]
     const draftParsed = parseDraft(draft)
@@ -143,12 +144,10 @@ export function MatchList({ matches, picks: initialPicks, isDeadlinePassed, user
 
   function handleSelect(match: Match) {
     if (selectedId === match.id) {
-      // Fechar o confronto aberto só se não houver alteração pendente.
       if (dirty) { flashWarn(match.id); return }
       setSelectedId(null)
       return
     }
-    // Trava: bloqueia abrir outro enquanto o atual tem alteração não salva.
     if (dirty) { flashWarn(selectedId); return }
     openMatch(match)
   }
@@ -168,13 +167,11 @@ export function MatchList({ matches, picks: initialPicks, isDeadlinePassed, user
     setSaveState('saving')
     const ok = await persist(savingId, parsed.h, parsed.a)
     if (!ok) {
-      // Mantém aberto e dirty para o usuário ver o erro e tentar de novo.
       setSaveState('error')
       return
     }
     setSaveState('saved')
     setDirty(false)
-    // Avança automático para o próximo confronto pendente da lista filtrada.
     const next = filtered.find((m) => m.id !== savingId && isEditable(m) && !picks[m.id])
     if (next) {
       setTimeout(() => openMatch(next), 350)
@@ -190,8 +187,6 @@ export function MatchList({ matches, picks: initialPicks, isDeadlinePassed, user
     setSelectedId(null)
   }
 
-  // Rede de segurança: se o app for fechado/escondido (comum no celular) com um
-  // palpite válido não salvo, persiste em silêncio para não perder nada.
   const flushRef = useRef<() => void>(() => {})
   useEffect(() => {
     flushRef.current = () => {
@@ -219,6 +214,9 @@ export function MatchList({ matches, picks: initialPicks, isDeadlinePassed, user
       : filterStatus === 'filled'
         ? t.matches.noneFilled
         : t.matches.notFound
+
+  const roundLabel = (r: Round) =>
+    (t.matches.roundLabels as Record<string, string>)[r] ?? r
 
   return (
     <div>
@@ -251,29 +249,20 @@ export function MatchList({ matches, picks: initialPicks, isDeadlinePassed, user
         </button>
       </div>
 
-      <div className="flex gap-2 overflow-x-auto pb-2 mb-4 scrollbar-hide">
-        <button onClick={() => setFilterRound(0)}
-          className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${filterRound === 0 ? 'bg-green-700 text-white' : 'bg-gray-100 text-gray-600'}`}>
-          {t.matches.all}
-        </button>
-        {[1, 2, 3].map((r) => (
-          <button key={r} onClick={() => setFilterRound(r)}
-            className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${filterRound === r ? 'bg-green-700 text-white' : 'bg-gray-100 text-gray-600'}`}>
-            {t.matches.round} {r}
+      {availableRounds.length > 1 && (
+        <div className="flex gap-2 overflow-x-auto pb-2 mb-4 scrollbar-hide">
+          <button onClick={() => setFilterRound('all')}
+            className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${filterRound === 'all' ? 'bg-green-700 text-white' : 'bg-gray-100 text-gray-600'}`}>
+            {t.matches.allRounds}
           </button>
-        ))}
-        <div className="w-px bg-gray-200" />
-        <button onClick={() => setFilterGroup('all')}
-          className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${filterGroup === 'all' ? 'bg-green-700 text-white' : 'bg-gray-100 text-gray-600'}`}>
-          {t.matches.allGroups}
-        </button>
-        {groups.map((g) => (
-          <button key={g} onClick={() => setFilterGroup(g)}
-            className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${filterGroup === g ? 'bg-green-700 text-white' : 'bg-gray-100 text-gray-600'}`}>
-            {t.matches.group} {g}
-          </button>
-        ))}
-      </div>
+          {availableRounds.map((r) => (
+            <button key={r} onClick={() => setFilterRound(r)}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${filterRound === r ? 'bg-green-700 text-white' : 'bg-gray-100 text-gray-600'}`}>
+              {roundLabel(r)}
+            </button>
+          ))}
+        </div>
+      )}
 
       {filtered.length === 0 ? (
         <p className="text-center text-gray-400 py-8">{emptyMessage}</p>
@@ -293,7 +282,7 @@ export function MatchList({ matches, picks: initialPicks, isDeadlinePassed, user
                 saveState={expanded ? saveState : 'idle'}
                 standings={expanded ? selectedStandings : null}
                 warn={warnId === match.id}
-                picksPublic={isDeadlinePassed}
+                picksPublic={isMatchLocked(match)}
                 summary={summaries?.[match.id]}
                 onSelect={() => handleSelect(match)}
                 onChange={handleChange}

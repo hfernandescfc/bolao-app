@@ -87,7 +87,7 @@ export function NextMatchesCard({ matches, pickByMatchId, locale, isDeadlinePass
                       {livePoints !== null && (
                         <span
                           className={`ml-1.5 font-bold ${
-                            livePoints === 7 ? 'text-green-700' : livePoints === 3 ? 'text-yellow-600' : 'text-gray-400'
+                            livePoints === 10 ? 'text-green-700' : livePoints! >= 5 ? 'text-yellow-600' : 'text-gray-400'
                           }`}
                           title={t.ifItStays}
                         >

@@ -6,7 +6,7 @@ import { calculateMatchPoints } from '@/lib/scoring/calculator'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Flag } from '@/components/ui/flag'
-import { Match, PICKS_DEADLINE } from '@/types'
+import { Match, isMatchLocked } from '@/types'
 import { getT, getLocale } from '@/lib/i18n/server'
 
 interface PickRow {
@@ -42,9 +42,18 @@ export default async function MatchPicksPage({
   const [t, locale] = await Promise.all([getT(), getLocale()])
   const td = t.matchDetail
 
-  // Mesma trava de tempo da tela de palpites por participante: antes do início
-  // da Copa ninguém vê os palpites alheios (o admin pode, para conferência).
-  const deadlinePassed = new Date() >= PICKS_DEADLINE
+  // Palpites visíveis publicamente somente após o prazo por partida (10 min antes do kickoff)
+  // Precisamos buscar a partida primeiro para verificar o prazo.
+  const { data: matchForDeadline } = await supabase
+    .from('matches')
+    .select('scheduled_at, status')
+    .eq('id', matchId)
+    .single()
+
+  const deadlinePassed = matchForDeadline
+    ? isMatchLocked(matchForDeadline as { status: Match['status']; scheduled_at: string })
+    : true
+
   if (!deadlinePassed) {
     const { data: me } = await supabase.from('profiles').select('role').eq('id', user.id).single()
     if (me?.role !== 'admin') {
@@ -116,8 +125,8 @@ export default async function MatchPicksPage({
   // Resumo do jogo (definitivo quando encerrado, parcial ao vivo).
   const showSummary = (isFinished || isLive) && hasScore && rows.length > 0
   const summary = {
-    exact: rows.filter((r) => r.pts === 7).length,
-    result: rows.filter((r) => r.pts === 3).length,
+    exact: rows.filter((r) => r.pts === 10).length,
+    result: rows.filter((r) => r.pts !== null && r.pts >= 5 && r.pts < 10).length,
     miss: rows.filter((r) => r.pts === 0).length,
   }
 
@@ -130,7 +139,9 @@ export default async function MatchPicksPage({
         <CardContent className="py-4">
           <div className="flex items-center justify-between mb-3">
             <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
-              {t.matches.group} {match.group_id} · {t.matches.round} {match.matchday}
+              {match.round === 'GROUP'
+                ? `${t.matches.group} ${match.group_id} · ${t.matches.round} ${match.matchday}`
+                : (t.matches.roundLabels as Record<string, string>)[match.round] ?? match.round}
             </span>
             {isLive ? (
               <Badge variant="destructive" className="text-[10px] py-0 animate-pulse">{td.live}</Badge>
@@ -235,14 +246,14 @@ export default async function MatchPicksPage({
 }
 
 function PtsBadge({ pts, provisional }: { pts: number; provisional: boolean }) {
-  // Verde = acerto máximo (7), amarelo = parcial (3), cinza = zero.
+  // Verde = placar exato (10), amarelo = resultado certo (5–9), cinza = zero.
   // Ao vivo, o badge fica vazado (outline) para sinalizar que é provisório.
   if (provisional) {
     const color =
-      pts === 7 ? 'border-green-600 text-green-700' : pts === 3 ? 'border-yellow-500 text-yellow-600' : 'border-gray-300 text-gray-400'
+      pts === 10 ? 'border-green-600 text-green-700' : pts >= 5 ? 'border-yellow-500 text-yellow-600' : 'border-gray-300 text-gray-400'
     return <Badge variant="outline" className={`text-[10px] py-0 w-9 justify-center ${color}`}>+{pts}</Badge>
   }
-  const color = pts === 7 ? 'bg-green-600' : pts === 3 ? 'bg-yellow-500' : 'bg-gray-300 text-gray-700'
+  const color = pts === 10 ? 'bg-green-600' : pts >= 5 ? 'bg-yellow-500' : 'bg-gray-300 text-gray-700'
   return <Badge className={`text-[10px] py-0 w-9 justify-center ${color}`}>{pts} pt{pts === 1 ? '' : 's'}</Badge>
 }
 
