@@ -16,8 +16,8 @@ export default async function CorrigirPlacarPage() {
     away_score: m.away_score as number | null,
     score_override: m.score_override as boolean,
     scheduled_at: m.scheduled_at as string,
-    home_team: (m.home_team as { name: string } | null)?.name ?? '?',
-    away_team: (m.away_team as { name: string } | null)?.name ?? '?',
+    home_team: (m.home_team as unknown as { name: string } | null)?.name ?? '?',
+    away_team: (m.away_team as unknown as { name: string } | null)?.name ?? '?',
   }))
 
   return (
