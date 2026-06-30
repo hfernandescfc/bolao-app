@@ -29,6 +29,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             { href: '/admin/preenchimento', label: 'Preenchimento' },
             { href: '/admin/sync', label: 'Sync API' },
             { href: '/admin/corrigir-placar', label: 'Corrigir Placar' },
+            { href: '/admin/palpite-manual', label: 'Palpite Manual' },
           ].map(({ href, label }) => (
             <Link
               key={href}
