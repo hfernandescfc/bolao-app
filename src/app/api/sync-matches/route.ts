@@ -53,7 +53,7 @@ export async function POST() {
 
       const { data: existing } = await supabase
         .from('matches')
-        .select('id, status, home_score, away_score')
+        .select('id, status, home_score, away_score, score_override')
         .eq('external_id', apiMatch.id)
         .maybeSingle()
 
@@ -80,6 +80,17 @@ export async function POST() {
         (newStatus === 'FINISHED' || newStatus === 'LIVE' || newStatus === 'PAUSED') &&
         homeScore !== null &&
         awayScore !== null
+
+      // Placar corrigido manualmente: preservar e só atualizar status
+      if (existing.score_override) {
+        if (existing.status === newStatus) continue
+        await supabase
+          .from('matches')
+          .update({ status: newStatus, updated_at: new Date().toISOString() })
+          .eq('id', existing.id)
+        updated++
+        continue
+      }
 
       const hasChanged =
         existing.status !== newStatus ||
